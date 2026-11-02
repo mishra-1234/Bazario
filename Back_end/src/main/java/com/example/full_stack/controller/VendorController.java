@@ -61,4 +61,13 @@ public class VendorController {
     }
 
 
+  // VendorController.java me ye method jodein
+  @GetMapping("/{id}")
+  public ResponseEntity<Vendor> getVendorById(@PathVariable Long id) {
+    return vendorService.getVendorById(id)
+      .map(ResponseEntity::ok)
+      .orElse(ResponseEntity.notFound().build());
+  }
+
+
 }

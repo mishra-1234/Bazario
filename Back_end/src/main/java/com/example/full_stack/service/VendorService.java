@@ -48,4 +48,8 @@ public class VendorService {
     public List<Vendor> getAllVendors() {
         return vendorRepository.findAll();
     }
+
+  public Optional<Vendor> getVendorById(Long id) {
+    return vendorRepository.findById(id);
+  }
 }

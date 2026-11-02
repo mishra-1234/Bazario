@@ -111,6 +111,7 @@ export class VendorDashboard implements OnInit {
 
   private shopsApiUrl = 'http://localhost:8080/api/shops';
   private productsApiUrl = 'http://localhost:8080/api/products';
+  private vendorsApiUrl = 'http://localhost:8080/vendors'; // Vendor profile fetch karne ke liye URL
 
   activeSection: string = 'dashboard';
 
@@ -126,9 +127,12 @@ export class VendorDashboard implements OnInit {
     }
 
     try {
-      const vendor = JSON.parse(vendorData);
+      const data = JSON.parse(vendorData);
 
-      return vendor.id ? Number(vendor.id) : null;
+      // Yeh check karega ki ID direct hai ya nested vendor object ke andar hai
+      const vendorId = data.id || (data.vendor && data.vendor.id);
+
+      return vendorId ? Number(vendorId) : null;
     } catch (error) {
       console.error('Invalid vendor data:', error);
       return null;
@@ -155,7 +159,33 @@ export class VendorDashboard implements OnInit {
     if (isPlatformBrowser(this.platformId)) {
       this.loadShopsFromDatabase();
       this.loadProductsFromDatabase();
+      this.loadLoggedInVendorProfile(); // Database se logged-in vendor profile fetch karne ke liye
     }
+  }
+
+  // Database se logged-in vendor ki details fetch karne ka method
+  loadLoggedInVendorProfile(): void {
+    const vendorId = this.getLoggedInVendorId();
+    if (!vendorId) return;
+
+    this.http.get<any>(`${this.vendorsApiUrl}/${vendorId}`).subscribe({
+      next: (vendor) => {
+        if (vendor) {
+          this.vendorProfile = {
+            shopName: vendor.shopName || 'Bazario Home & Gadgets',
+            ownerName: vendor.ownerName || vendor.name || 'Vendor',
+            email: vendor.email || '',
+            phone: vendor.phone || '',
+            address: vendor.address || 'Not Provided',
+            description: vendor.description || 'Curated everyday essentials.',
+          };
+          this.profileDraft = { ...this.vendorProfile };
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load vendor profile from database:', err);
+      },
+    });
   }
 
   selectSection(key: string): void {
@@ -300,11 +330,7 @@ export class VendorDashboard implements OnInit {
         } else {
           this.selectedShopId = null;
         }
-
-        console.log('Current vendor ID:', vendorId);
-        console.log('Current vendor shops:', this.shops);
       },
-
       error: (err) => {
         console.error('Error fetching vendor shops:', err);
       },
@@ -347,12 +373,10 @@ export class VendorDashboard implements OnInit {
       this.shopForm.logo = '🏪';
     }
 
-    // Get logged-in vendor ID
     const vendorId = this.getLoggedInVendorId();
 
     if (!vendorId) {
       this.showToast('Vendor login information not found');
-      console.error('Vendor ID not found in localStorage/sessionStorage');
       return;
     }
 
@@ -364,23 +388,21 @@ export class VendorDashboard implements OnInit {
       payload.id = this.editingShopId;
     }
 
-    // Save shop under the logged-in vendor
     this.http.post<VendorShop>(`${this.shopsApiUrl}/vendor/${vendorId}`, payload).subscribe({
       next: () => {
         this.showToast(
           this.editingShopId ? 'Shop updated in database' : 'Vendor shop created in MySQL!',
         );
-
         this.showShopModal = false;
         this.loadShopsFromDatabase();
       },
-
       error: (err) => {
         console.error('Save failed:', err);
         this.showToast('Failed to save to database. Check backend logs.');
       },
     });
   }
+
   closeShopModal(): void {
     this.showShopModal = false;
   }
@@ -794,12 +816,12 @@ export class VendorDashboard implements OnInit {
 
   // ===== VENDOR PROFILE =====
   vendorProfile = {
-    shopName: 'Bazario Home & Gadgets',
-    ownerName: 'Aditya Rao',
-    email: 'aditya.rao@bazario.com',
-    phone: '+91 98765 43210',
-    address: '14, MG Road, Bengaluru, Karnataka 560001',
-    description: 'Curated everyday essentials.',
+    shopName: '',
+    ownerName: '',
+    email: '',
+    phone: '',
+    address: '',
+    description: '',
   };
 
   profileDraft = { ...this.vendorProfile };
