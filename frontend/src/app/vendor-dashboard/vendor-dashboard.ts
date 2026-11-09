@@ -870,4 +870,5 @@ export class VendorDashboard implements OnInit {
     this.showToast('Logging out...');
     this.router.navigate(['/login']);
   }
+
 }

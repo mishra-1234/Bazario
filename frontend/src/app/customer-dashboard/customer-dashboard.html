@@ -11,21 +11,30 @@
   </form>
 
   <div class="actions">
-    <button class="icon-btn" (click)="go('wishlist')">♡ Wishlist <b class="badge" [class.pop]="wishlist().length">{{ wishlist().length }}</b></button>
-    <button class="icon-btn" (click)="openCart()">🛒 Cart <b class="badge" [class.pop]="cartCount()">{{ cartCount() }}</b></button>
+    <button class="icon-btn" (click)="go('wishlist')">♡ Wishlist <b class="badge"
+                                                                    [class.pop]="wishlist().length">{{ wishlist().length }}</b>
+    </button>
+    <button class="icon-btn" (click)="openCart()">🛒 Cart <b class="badge"
+                                                            [class.pop]="cartCount()">{{ cartCount() }}</b></button>
     <div class="account">
       <button class="icon-btn" (click)="accountOpen.set(!accountOpen())" [attr.aria-expanded]="accountOpen()">
-        👤 Account @if (unread()) { <i class="dot"></i> }
+        👤 Account @if (unread()) {
+        <i class="dot"></i>
+      }
       </button>
+
       <nav class="menu" [class.open]="accountOpen()">
         <button (click)="go('profile')">My Profile</button>
         <button (click)="go('editProfile')">Edit Profile</button>
         <button (click)="go('addresses')">My Addresses</button>
         <button (click)="go('orders')">My Orders</button>
-        <button (click)="go('notifications')">Notifications @if (unread()) { <b class="badge sm">{{ unread() }}</b> }</button>
+        <button (click)="go('notifications')">Notifications @if (unread()) {
+          <b class="badge sm">{{ unread() }}</b>
+        }</button>
         <button (click)="go('password')">Change Password</button>
         <button class="danger" (click)="logout()">Logout</button>
       </nav>
+
     </div>
   </div>
 </header>
@@ -58,7 +67,8 @@
         </div>
 
         <h2 class="sec">Explore popular categories
-          <button class="link" (click)="go('categories')">See all →</button></h2>
+          <button class="link" (click)="go('categories')">See all →</button>
+        </h2>
         <div class="cat-row">
           @for (c of categories; track c.name) {
             <button class="cat" (click)="pickCategory(c.name)"><span>{{ c.icon }}</span>{{ c.name }}</button>
@@ -66,17 +76,21 @@
         </div>
 
         <div class="deal-banner">
-          <div><h3>Up to 60% off clearance</h3><p>Fall for a great deal from vendors near you.</p></div>
+          <div><h3>Up to 60% off clearance</h3>
+            <p>Fall for a great deal from vendors near you.</p></div>
           <button class="btn-yellow" (click)="setSort('low'); go('products')">Shop clearance</button>
         </div>
 
-        <h2 class="sec pill">Trending combo &amp; deals <button class="link" (click)="go('products')">See all →</button></h2>
+        <h2 class="sec pill">Trending combo &amp; deals
+          <button class="link" (click)="go('products')">See all →</button>
+        </h2>
         <div class="grid">
-          @for (p of products().slice(0, 4); track p.id) { <ng-container *ngTemplateOutlet="card; context: { $implicit: p }" /> }
+          @for (p of products().slice(0, 4); track p.id) {
+            <ng-container *ngTemplateOutlet="card; context: { $implicit: p }" />
+          }
         </div>
       </section>
     }
-
     @case ('products') {
       <section class="view">
         <h2 class="sec">Products <span class="count">{{ visible().length }} found</span></h2>
@@ -95,11 +109,14 @@
             <label>Category
               <select [ngModel]="category()" (ngModelChange)="category.set($event)">
                 <option>All</option>
-                @for (c of categories; track c.name) { <option>{{ c.name }}</option> }
+                @for (c of categories; track c.name) {
+                  <option>{{ c.name }}</option>
+                }
               </select>
             </label>
             <label>Max price: {{ money(maxPrice()) }}
-              <input type="range" min="20" max="5000" step="50" [value]="maxPrice()" (input)="maxPrice.set(+$any($event.target).value)" />
+              <input type="range" min="20" max="5000" step="50" [value]="maxPrice()"
+                     (input)="maxPrice.set(+$any($event.target).value)" />
             </label>
             <button class="link" (click)="resetFilters()">Reset filters</button>
           </div>
@@ -107,14 +124,18 @@
 
         @if (visible().length) {
           <div class="grid">
-            @for (p of visible(); track p.id) { <ng-container *ngTemplateOutlet="card; context: { $implicit: p }" /> }
+            @for (p of visible(); track p.id) {
+              <ng-container *ngTemplateOutlet="card; context: { $implicit: p }" />
+            }
           </div>
         } @else {
-          <div class="empty">No products match. <button class="link" (click)="resetFilters()">Clear filters</button> to see everything.</div>
+          <div class="empty">No products match.
+            <button class="link" (click)="resetFilters()">Clear filters</button>
+            to see everything.
+          </div>
         }
       </section>
     }
-
     @case ('categories') {
       <section class="view">
         <h2 class="sec">Categories</h2>
@@ -125,18 +146,20 @@
         </div>
       </section>
     }
-
     @case ('wishlist') {
       <section class="view">
         <h2 class="sec">My wishlist</h2>
         @if (wished().length) {
           <div class="grid">
-            @for (p of wished(); track p.id) { <ng-container *ngTemplateOutlet="card; context: { $implicit: p }" /> }
+            @for (p of wished(); track p.id) {
+              <ng-container *ngTemplateOutlet="card; context: { $implicit: p }" />
+            }
           </div>
-        } @else { <div class="empty">Nothing saved yet. Tap ♡ on any product to keep it here.</div> }
+        } @else {
+          <div class="empty">Nothing saved yet. Tap ♡ on any product to keep it here.</div>
+        }
       </section>
     }
-
     @case ('orders') {
       <section class="view">
         <h2 class="sec">My orders</h2>
@@ -150,61 +173,82 @@
                 <em class="status s-{{ o.status.split(' ')[0] }}">{{ o.status }}</em>
               </div>
               <div class="o-btns">
-                @if (o.status === 'Processing' || o.status === 'Shipped') { <button class="btn-line" (click)="trackOrder(o)">Track order</button> }
-                @if (o.status === 'Processing') { <button class="btn-line warn" (click)="cancelOrder(o)">Cancel order</button> }
-                @if (o.status === 'Delivered') { <button class="btn-line warn" (click)="requestRefund(o)">Request refund</button> }
+                @if (o.status === 'Processing' || o.status === 'Shipped') {
+                  <button class="btn-line" (click)="trackOrder(o)">Track order</button>
+                }
+                @if (o.status === 'Processing') {
+                  <button class="btn-line warn" (click)="cancelOrder(o)">Cancel order</button>
+                }
+                @if (o.status === 'Delivered') {
+                  <button class="btn-line warn" (click)="requestRefund(o)">Request refund</button>
+                }
                 <button class="btn-green sm" (click)="buyAgain(o)">Buy again</button>
               </div>
             </article>
-          } @empty { <div class="empty">No orders yet. Your first purchase will appear here.</div> }
+          } @empty {
+            <div class="empty">No orders yet. Your first purchase will appear here.</div>
+          }
         </div>
       </section>
     }
-
     @case ('profile') {
       <section class="view panel">
         <h2 class="sec">My profile</h2>
         <div class="avatar">{{ profile.name[0] }}</div>
-        <dl><dt>Name</dt><dd>{{ profile.name }}</dd><dt>Email</dt><dd>{{ profile.email }}</dd><dt>Phone</dt><dd>{{ profile.phone }}</dd></dl>
-        <div class="row"><button class="btn-green" (click)="go('editProfile')">Edit profile</button>
+        <dl>
+          <dt>Name</dt>
+          <dd>{{ profile.name }}</dd>
+          <dt>Email</dt>
+          <dd>{{ profile.email }}</dd>
+          <dt>Phone</dt>
+          <dd>{{ profile.phone }}</dd>
+        </dl>
+        <div class="row">
+          <button class="btn-green" (click)="go('editProfile')">Edit profile</button>
           <button class="btn-line" (click)="go('addresses')">My addresses</button>
-          <button class="btn-line" (click)="go('password')">Change password</button></div>
+          <button class="btn-line" (click)="go('password')">Change password</button>
+        </div>
       </section>
     }
-
     @case ('editProfile') {
       <section class="view panel">
         <h2 class="sec">Edit profile</h2>
         <label>Name <input [(ngModel)]="profile.name" name="n" /></label>
         <label>Email <input [(ngModel)]="profile.email" name="e" type="email" /></label>
         <label>Phone <input [(ngModel)]="profile.phone" name="p" /></label>
-        <div class="row"><button class="btn-green" (click)="saveProfile()">Save changes</button><button class="btn-line" (click)="go('profile')">Cancel</button></div>
+        <div class="row">
+          <button class="btn-green" (click)="saveProfile()">Save changes</button>
+          <button class="btn-line" (click)="go('profile')">Cancel</button>
+        </div>
       </section>
     }
-
     @case ('addresses') {
       <section class="view panel">
         <h2 class="sec">My addresses</h2>
-        @for (a of addresses; track a.label) { <div class="addr"><b>{{ a.label }}</b><span>{{ a.text }}</span></div> }
+        @for (a of addresses; track a.label) {
+          <div class="addr"><b>{{ a.label }}</b><span>{{ a.text }}</span></div>
+        }
       </section>
     }
-
     @case ('notifications') {
       <section class="view panel">
-        <h2 class="sec">Notifications <button class="link" (click)="markRead()">Mark all as read</button></h2>
+        <h2 class="sec">Notifications
+          <button class="link" (click)="markRead()">Mark all as read</button>
+        </h2>
         @for (n of notifications(); track n.text) {
           <div class="note" [class.unread]="!n.read"><span>{{ n.text }}</span><small>{{ n.time }}</small></div>
         }
       </section>
     }
-
     @case ('password') {
       <section class="view panel">
         <h2 class="sec">Change password</h2>
         <label>Current password <input type="password" name="c" /></label>
         <label>New password <input type="password" name="n" /></label>
         <label>Confirm new password <input type="password" name="f" /></label>
-        <div class="row"><button class="btn-green" (click)="changePassword()">Update password</button></div>
+        <div class="row">
+          <button class="btn-green" (click)="changePassword()">Update password</button>
+        </div>
       </section>
     }
   }
@@ -213,7 +257,9 @@
 
 <ng-template #card let-p>
   <article class="card">
-    <button class="heart" [class.on]="isWished(p.id)" (click)="toggleWish(p)" aria-label="Wishlist">{{ isWished(p.id) ? '♥' : '♡' }}</button>
+    <button class="heart" [class.on]="isWished(p.id)" (click)="toggleWish(p)"
+            aria-label="Wishlist">{{ isWished(p.id) ? '♥' : '♡' }}
+    </button>
     <div class="thumb" [style.background]="p.tint">
       @if (p.imageUrl) {
         <img [src]="p.imageUrl" [alt]="p.name" style="width: 100%; height: 100%; object-fit: contain;" />
@@ -225,7 +271,8 @@
 
 
     @if (p.vendorShop) {
-      <div class="vendor-shop-tag" style="font-size: 12px; color: #1e6333; margin: 2px 0 6px; display: flex; align-items: center; gap: 4px;">
+      <div class="vendor-shop-tag"
+           style="font-size: 12px; color: #1e6333; margin: 2px 0 6px; display: flex; align-items: center; gap: 4px;">
         <span>{{ p.vendorShop.logo || '🏪' }}</span>
         <b>{{ p.vendorShop.shopName }}</b>
       </div>
@@ -256,7 +303,8 @@
       <h3>{{ p.name }}</h3>
       <div class="stars">{{ stars(p.rating) }} <small>{{ p.rating }}</small></div>
       <div class="price big">{{ money(p.price) }} <s>{{ money(p.old) }}</s></div>
-      <p class="desc">{{ p.description || 'Sold by verified vendors on Bazario with easy returns and secure payment.' }}</p>
+      <p
+        class="desc">{{ p.description || 'Sold by verified vendors on Bazario with easy returns and secure payment.' }}</p>
 
       <div class="row">
         <button class="btn-green" (click)="addToCart(p)">Add to cart</button>
@@ -272,7 +320,8 @@
       <div class="vendors" [class.open]="showVendors()">
         <div class="vendors-in">
           @if (p.vendorShop) {
-            <div class="vendor" style="flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px; border-radius: 8px; background: #f9fbf9; border: 1px solid #e1ede2;">
+            <div class="vendor"
+                 style="flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px; border-radius: 8px; background: #f9fbf9; border: 1px solid #e1ede2;">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span style="font-size: 24px;">{{ p.vendorShop.logo || '🏪' }}</span>
                 <div>
@@ -281,14 +330,20 @@
                 </div>
               </div>
 
-              <div style="font-size: 12px; color: #495444; margin-top: 4px; display: flex; flex-direction: column; gap: 3px;">
+              <div
+                style="font-size: 12px; color: #495444; margin-top: 4px; display: flex; flex-direction: column; gap: 3px;">
                 <span>📧 <strong>Email:</strong> {{ p.vendorShop.email }}</span>
-                @if (p.vendorShop.phone) { <span>📞 <strong>Contact:</strong> {{ p.vendorShop.phone }}</span> }
-                @if (p.vendorShop.address) { <span>📍 <strong>Location:</strong> {{ p.vendorShop.address }}</span> }
+                @if (p.vendorShop.phone) {
+                  <span>📞 <strong>Contact:</strong> {{ p.vendorShop.phone }}</span>
+                }
+                @if (p.vendorShop.address) {
+                  <span>📍 <strong>Location:</strong> {{ p.vendorShop.address }}</span>
+                }
               </div>
             </div>
           } @else {
-            <div style="padding: 10px; font-size: 13px; color: #666;">No vendor information mapped for this product.</div>
+            <div style="padding: 10px; font-size: 13px; color: #666;">No vendor information mapped for this product.
+            </div>
           }
         </div>
       </div>
@@ -299,21 +354,35 @@
 <!-- Cart + checkout drawer -->
 <div class="overlay cart" [class.show]="cartOpen()" (click)="closeCart()"></div>
 <aside class="drawer" [class.open]="cartOpen()">
-  <header><h3>Your cart ({{ cartCount() }})</h3><button class="x static" (click)="closeCart()">✕</button></header>
+  <header><h3>Your cart ({{ cartCount() }})</h3>
+    <button class="x static" (click)="closeCart()">✕</button>
+  </header>
   @if (checkedOut()) {
-    <div class="success"><div class="check">✓</div><h3>Order placed</h3><p>Track it any time from My Orders.</p>
-      <button class="btn-green" (click)="go('orders')">My orders</button></div>
+    <div class="success">
+      <div class="check">✓</div>
+      <h3>Order placed</h3>
+      <p>Track it any time from My Orders.</p>
+      <button class="btn-green" (click)="go('orders')">My orders</button>
+    </div>
   } @else {
     <div class="lines">
       @for (i of cart(); track i.p.id) {
         <div class="line"><span class="l-ico">{{ i.p.icon }}</span>
           <div><b>{{ i.p.name }}</b><small>{{ money(i.p.price) }}</small></div>
-          <div class="qty"><button (click)="changeQty(i.p.id, -1)">−</button><span>{{ i.qty }}</span><button (click)="changeQty(i.p.id, 1)">+</button></div>
+          <div class="qty">
+            <button (click)="changeQty(i.p.id, -1)">−</button>
+            <span>{{ i.qty }}</span>
+            <button (click)="changeQty(i.p.id, 1)">+</button>
+          </div>
         </div>
-      } @empty { <div class="empty">Your cart is empty. Add something you like.</div> }
+      } @empty {
+        <div class="empty">Your cart is empty. Add something you like.</div>
+      }
     </div>
-    <footer><div class="total"><span>Total</span><b>{{ money(cartTotal()) }}</b></div>
-      <button class="btn-yellow wide" [disabled]="!cart().length" (click)="checkout()">Checkout</button></footer>
+    <footer>
+      <div class="total"><span>Total</span><b>{{ money(cartTotal()) }}</b></div>
+      <button class="btn-yellow wide" [disabled]="!cart().length" (click)="checkout()">Checkout</button>
+    </footer>
   }
 </aside>
 
@@ -322,7 +391,8 @@
   <div class="overlay" (click)="closeTrack()"></div>
   <div class="modal small" role="dialog" aria-modal="true">
     <button class="x" (click)="closeTrack()" aria-label="Close">✕</button>
-    <div class="m-body"><h3>Track {{ o.id }}</h3><p class="desc">{{ o.item }}</p>
+    <div class="m-body"><h3>Track {{ o.id }}</h3>
+      <p class="desc">{{ o.item }}</p>
       <ol class="track">
         @for (s of steps; track s; let idx = $index) {
           <li [class.done]="idx <= stepIndex(o)" [style.transition-delay]="idx * 120 + 'ms'"><i></i>{{ s }}</li>
