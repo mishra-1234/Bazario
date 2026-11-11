@@ -1,6 +1,5 @@
-import { Component, HostListener, OnInit } from '@angular/core';
-
-import { CommonModule } from '@angular/common';
+import { Component, HostListener, OnInit, PLATFORM_ID, inject } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
@@ -257,20 +256,24 @@ export class Shop  implements OnInit {
     { name: 'Ananya Das', location: 'Kolkata', avatar: '👩‍🦰', rating: 5, text: 'Fast delivery, easy returns, and that little "added to cart" toast makes me smile every time. 💜' }
   ];
 
+  private platformId = inject(PLATFORM_ID);
+
   constructor(private router: Router) {}
 
   ngOnInit(): void {
-    this.checkLoginState();
-    const savedCart = localStorage.getItem('bazario_cart');
-    if (savedCart) {
-      try {
-        this.cartItems = JSON.parse(savedCart);
-        this.cartCount = this.cartItems.length;
-      } catch {
-        this.cartItems = [];
+    if (isPlatformBrowser(this.platformId)) {
+      this.checkLoginState();
+      const savedCart = localStorage.getItem('bazario_cart');
+      if (savedCart) {
+        try {
+          this.cartItems = JSON.parse(savedCart);
+          this.cartCount = this.cartItems.length;
+        } catch {
+          this.cartItems = [];
+        }
       }
+      setInterval(() => this.nextJoke(), 4500);
     }
-    setInterval(() => this.nextJoke(), 4500);
   }
 
   nextJoke(): void {
@@ -279,10 +282,13 @@ export class Shop  implements OnInit {
 
   @HostListener('window:scroll')
   onWindowScroll(): void {
-    this.isScrolled = window.scrollY > 20;
+    if (isPlatformBrowser(this.platformId)) {
+      this.isScrolled = window.scrollY > 20;
+    }
   }
 
   checkLoginState(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
     const loggedIn = localStorage.getItem('isLoggedIn');
     const user = localStorage.getItem('user');
     this.isLoggedIn = loggedIn === 'true';
@@ -297,8 +303,10 @@ export class Shop  implements OnInit {
   }
 
   logout(): void {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('user');
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('user');
+    }
     this.isLoggedIn = false;
     this.userName = '';
     this.fireToast('You have been logged out 👋');
@@ -390,7 +398,8 @@ export class Shop  implements OnInit {
       this.showLoginModal = true;
       return;
     }
-    this.fireToast(`Proceeding to checkout for ${product.name} 🛍️`);
+    this.addToCart(product);
+    this.router.navigate(['/customer-dashboard']);
   }
 
   goToLogin(): void {

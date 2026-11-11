@@ -1,7 +1,8 @@
 package com.example.full_stack.entity;
 
-
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "products")
 public class Product {
@@ -21,10 +22,44 @@ public class Product {
 
     private String imageUrl;
 
+    private String category = "Electronics";
+
+    private Integer stock = 50;
+
+    private String status = "Active";
+
+    private Double discount = 0.0;
+
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
 
     @ManyToOne
     @JoinColumn(name = "vendor_shop_id", nullable = false)
     private VendorShop vendorShop;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+        if (this.status == null) {
+            this.status = "Active";
+        }
+        if (this.stock == null) {
+            this.stock = 50;
+        }
+        if (this.discount == null) {
+            this.discount = 0.0;
+        }
+        if (this.category == null) {
+            this.category = "Electronics";
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 
     public Product() {
     }
@@ -37,6 +72,8 @@ public class Product {
         this.price = price;
         this.imageUrl = imageUrl;
         this.vendorShop = vendorShop;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     public Long getId() {
@@ -77,6 +114,54 @@ public class Product {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public Integer getStock() {
+        return stock;
+    }
+
+    public void setStock(Integer stock) {
+        this.stock = stock;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Double getDiscount() {
+        return discount;
+    }
+
+    public void setDiscount(Double discount) {
+        this.discount = discount;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     public VendorShop getVendorShop() {

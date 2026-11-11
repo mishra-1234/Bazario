@@ -1,4 +1,4 @@
-<div class="portal" [ngClass]="{ 'sidebar-open': sidebarOpen }">
+<div class="portal" [ngClass]="{ 'sidebar-open': sidebarOpen, 'dark-theme': isDarkMode }">
 
   <!-- ===================== SIDEBAR ===================== -->
   <aside class="sidebar">
@@ -6,7 +6,7 @@
       <span class="brand-mark">B</span>
       <div class="brand-text">
         <span class="brand-name">BAZARIO</span>
-        <span class="brand-tag">Vendor Studio</span>
+        <span class="brand-tag">Seller Studio</span>
       </div>
     </div>
 
@@ -35,19 +35,73 @@
     <header class="topbar">
       <button class="menu-btn" (click)="toggleSidebar()" aria-label="Toggle menu">☰</button>
       <div class="topbar-heading">
-        <span class="section-eyebrow">Bazario Vendor Portal</span>
+        <span class="section-eyebrow">Bazario Seller Studio</span>
         <h1>{{ activeLabel }}</h1>
       </div>
+
+      <!-- Storefront Context Switcher -->
+      <div class="shop-switcher-container">
+        <button class="shop-switcher-btn" (click)="toggleShopDropdown()" type="button" [attr.aria-expanded]="shopDropdownOpen">
+          <span class="switcher-icon">{{ selectedShop?.logo || '🏪' }}</span>
+          <div class="switcher-text">
+            <span class="switcher-sub">Storefront Context</span>
+            <span class="switcher-current">{{ selectedShopName }}</span>
+          </div>
+          <span class="switcher-arrow">▾</span>
+        </button>
+
+        <div class="shop-dropdown" *ngIf="shopDropdownOpen" (click)="$event.stopPropagation()">
+          <div class="dropdown-header">
+            <span>Select Storefront Context</span>
+            <span class="dropdown-count">{{ shops.length }} shop{{ shops.length === 1 ? '' : 's' }}</span>
+          </div>
+
+          <div class="dropdown-list">
+            <!-- Combined view -->
+            <button class="dropdown-item" [class.active]="selectedShopId === null" (click)="selectShopContext(null)">
+              <span class="dropdown-item-icon">🌐</span>
+              <div class="dropdown-item-info">
+                <span class="dropdown-item-name">All Shops (Combined)</span>
+                <span class="dropdown-item-meta">Aggregate products, orders & revenue</span>
+              </div>
+              <span class="dropdown-check" *ngIf="selectedShopId === null">✓</span>
+            </button>
+
+            <!-- Individual shops -->
+            <button class="dropdown-item" *ngFor="let s of shops" [class.active]="selectedShopId === s.id" (click)="selectShopContext(s.id)">
+              <span class="dropdown-item-icon">{{ s.logo || '🏪' }}</span>
+              <div class="dropdown-item-info">
+                <span class="dropdown-item-name">{{ s.shopName }}</span>
+                <span class="dropdown-item-meta">{{ s.category }} · {{ s.status }}</span>
+              </div>
+              <span class="dropdown-check" *ngIf="selectedShopId === s.id">✓</span>
+            </button>
+          </div>
+
+          <div class="dropdown-footer">
+            <button class="dropdown-create-btn" (click)="addShop(); shopDropdownOpen = false;">
+              <span>➕</span> Create New Shop
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div class="topbar-actions">
         <div class="search-box">
           <span>🔍</span>
-          <input type="text" placeholder="Search anything...">
+          <input type="text" placeholder="Search catalog, orders..." [(ngModel)]="searchTerm">
         </div>
-        <button class="icon-btn" (click)="selectSection('notifications')">
+        <button class="icon-btn theme-toggle-btn" (click)="toggleTheme()" [title]="isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'">
+          {{ isDarkMode ? '☀️' : '🌙' }}
+        </button>
+        <button class="icon-btn" (click)="selectSection('notifications')" title="Notifications">
           🔔
           <span class="dot" *ngIf="unreadCount > 0"></span>
         </button>
-        <div class="avatar" (click)="selectSection('profile')">{{ vendorProfile.ownerName.charAt(0) }}</div>
+        <div class="avatar-pill" (click)="selectSection('profile')" title="Vendor Profile">
+          <div class="avatar">{{ (vendorName || 'V').charAt(0).toUpperCase() }}</div>
+          <span class="avatar-name">{{ vendorName }}</span>
+        </div>
       </div>
     </header>
 
@@ -55,9 +109,28 @@
 
       <!-- ================= DASHBOARD ================= -->
       <section *ngIf="activeSection === 'dashboard'" class="section">
-        <div class="section-head">
-          <h2>Good to see you, {{ vendorProfile.ownerName.split(' ')[0] }}</h2>
-          <p>Here's how {{ vendorProfile.shopName }} is performing today.</p>
+        <!-- Personalized Welcome Banner -->
+        <div class="welcome-banner">
+          <div class="welcome-banner-info">
+            <div class="welcome-pill">✨ Seller Studio Overview</div>
+            <h2>Welcome back, {{ vendorName }}! 👋</h2>
+            <p class="welcome-meta">
+              <span>📅 {{ currentFormattedDate }}</span>
+              <span class="welcome-sep">•</span>
+              <span>🏪 Active Context: <strong>{{ selectedShopName }}</strong></span>
+            </p>
+          </div>
+          <div class="welcome-quick-actions">
+            <button class="btn-banner-action" (click)="addProduct()">
+              <span>➕</span> Add Product
+            </button>
+            <button class="btn-banner-action secondary" (click)="addShop()">
+              <span>🏪</span> New Shop
+            </button>
+            <button class="btn-banner-action ghost" (click)="exportOrdersCSV()">
+              <span>📥</span> Export CSV
+            </button>
+          </div>
         </div>
 
         <div class="hero-stats">
@@ -98,11 +171,11 @@
           <div class="panel">
             <div class="panel-head">
               <h3>Sales Overview</h3>
-              <span class="panel-note">This week</span>
+              <span class="panel-note">Live trend</span>
             </div>
             <div class="bar-chart">
               <div class="bar-col" *ngFor="let day of salesOverview">
-                <div class="bar" [style.height.%]="day.value"></div>
+                <div class="bar" [style.height.%]="day.value > 0 ? (day.value > 100 ? 100 : day.value) : 8"></div>
                 <span class="bar-label">{{ day.label }}</span>
               </div>
             </div>
@@ -125,22 +198,23 @@
             <div class="panel-head">
               <h3>Best Selling Products</h3>
             </div>
-            <ul class="mini-list">
+            <ul class="mini-list" *ngIf="bestSellingProducts.length > 0">
               <li *ngFor="let p of bestSellingProducts">
-                <span class="mini-list-icon">{{ p.image }}</span>
+                <span class="mini-list-icon">📦</span>
                 <span class="mini-list-text">
                   <strong>{{ p.name }}</strong>
-                  <small>{{ p.sold }} sold · ₹{{ p.revenue | number }}</small>
+                  <small>{{ p.sold }} units sold · ₹{{ p.revenue | number }}</small>
                 </span>
               </li>
             </ul>
+            <p class="empty-note" *ngIf="bestSellingProducts.length === 0">No sales recorded in this period.</p>
           </div>
 
           <div class="panel">
             <div class="panel-head">
               <h3>Low Stock Alerts</h3>
             </div>
-            <ul class="mini-list">
+            <ul class="mini-list" *ngIf="lowStockAlerts.length > 0">
               <li *ngFor="let item of lowStockAlerts">
                 <span class="mini-list-icon warn-icon">⚠️</span>
                 <span class="mini-list-text">
@@ -164,11 +238,14 @@
                 </thead>
                 <tbody>
                 <tr *ngFor="let o of recentOrders">
-                  <td>{{ o.id }}</td>
+                  <td>#{{ o.id }}</td>
                   <td>{{ o.customer }}</td>
                   <td>{{ o.product }}</td>
                   <td>₹{{ o.amount | number }}</td>
                   <td><span class="badge" [ngClass]="'status-' + o.status.toLowerCase().replace(' ', '-')">{{ o.status }}</span></td>
+                </tr>
+                <tr *ngIf="recentOrders.length === 0">
+                  <td colspan="5" style="text-align: center; color: #64748b; padding: 20px;">No recent orders found for this shopfront.</td>
                 </tr>
                 </tbody>
               </table>
@@ -177,53 +254,209 @@
         </div>
       </section>
 
-      <!-- ================= CREATE VENDOR SHOP ================= -->
+      <!-- ================= CREATE / MANAGE VENDOR SHOPS ================= -->
       <section *ngIf="activeSection === 'shops'" class="section">
         <div class="section-head row">
           <div>
-            <h2>Your Shops</h2>
-            <p>Create and manage the shopfronts you sell under on Bazario.</p>
+            <h2>Your Storefronts</h2>
+            <p>Create and independently manage all your brand shops on Bazario.</p>
           </div>
-          <button class="btn-primary" (click)="addShop()">+ Create Vendor Shop</button>
+          <div class="header-action-group">
+            <button type="button" class="btn-secondary" (click)="refreshShops()" [disabled]="isLoadingShops" title="Refresh storefronts from backend">
+              <span [class.spin-icon]="isLoadingShops">🔄</span> Refresh
+            </button>
+            <button type="button" class="btn-primary" (click)="addShop()" title="Create a new storefront">
+              + Create Vendor Shop
+            </button>
+          </div>
         </div>
 
-        <div class="shop-grid">
+        <!-- Filter & Search Toolbar for Shops -->
+        <div class="toolbar-panel shop-toolbar-panel">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text"
+                   placeholder="Search shops by name, category, owner, email..."
+                   [(ngModel)]="shopSearchQuery"
+                   (input)="onShopFilterChange()" />
+            <button type="button"
+                    class="search-clear-btn"
+                    *ngIf="shopSearchQuery"
+                    (click)="shopSearchQuery = ''; onShopFilterChange()"
+                    title="Clear search">✕</button>
+          </div>
+
+          <div class="filter-group">
+            <div class="shop-filter-chips">
+              <button type="button"
+                      class="filter-chip"
+                      [class.active]="shopStatusFilter === 'All'"
+                      (click)="setShopStatusFilter('All')">
+                All ({{ shopCountAll }})
+              </button>
+              <button type="button"
+                      class="filter-chip"
+                      [class.active]="shopStatusFilter === 'Active'"
+                      (click)="setShopStatusFilter('Active')">
+                Active ({{ shopCountActive }})
+              </button>
+              <button type="button"
+                      class="filter-chip"
+                      [class.active]="shopStatusFilter === 'Inactive'"
+                      (click)="setShopStatusFilter('Inactive')">
+                Inactive ({{ shopCountInactive }})
+              </button>
+              <button type="button"
+                      class="filter-chip"
+                      [class.active]="shopStatusFilter === 'Suspended'"
+                      (click)="setShopStatusFilter('Suspended')">
+                Suspended ({{ shopCountSuspended }})
+              </button>
+            </div>
+
+            <select [(ngModel)]="shopCategoryFilter" (change)="onShopFilterChange()" title="Filter by category">
+              <option value="All">All Categories</option>
+              <option *ngFor="let c of shopCategories" [value]="c">{{ c }}</option>
+            </select>
+
+            <select [(ngModel)]="shopSortBy" (change)="onShopFilterChange()" title="Sort storefronts">
+              <option value="newest">Sort by: Newest First</option>
+              <option value="oldest">Sort by: Oldest First</option>
+              <option value="name-asc">Sort by: Name (A - Z)</option>
+              <option value="name-desc">Sort by: Name (Z - A)</option>
+              <option value="status">Sort by: Status (Active First)</option>
+            </select>
+
+            <button type="button"
+                    class="btn-ghost small reset-btn"
+                    *ngIf="hasActiveShopFilters"
+                    (click)="resetShopFilters()"
+                    title="Reset all filters">
+              ✕ Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Summary Row -->
+        <div class="filter-summary-row" *ngIf="hasActiveShopFilters">
+          <span class="summary-text">Showing <strong>{{ filteredShops.length }}</strong> of <strong>{{ shops.length }}</strong> storefronts</span>
+          <span class="filter-tag" *ngIf="shopSearchQuery">Query: "{{ shopSearchQuery }}"</span>
+          <span class="filter-tag" *ngIf="shopStatusFilter !== 'All'">Status: {{ shopStatusFilter }}</span>
+          <span class="filter-tag" *ngIf="shopCategoryFilter !== 'All'">Category: {{ shopCategoryFilter }}</span>
+          <button type="button" class="link-btn" (click)="resetShopFilters()">Clear all</button>
+        </div>
+
+        <!-- Loading Skeleton Slices -->
+        <div class="shop-grid" *ngIf="isLoadingShops">
+          <div class="shop-card skeleton-card" *ngFor="let i of [1, 2, 3]">
+            <div class="skeleton-header">
+              <div class="skeleton skeleton-icon"></div>
+              <div class="skeleton skeleton-badge"></div>
+            </div>
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-text"></div>
+            <div class="skeleton skeleton-text" style="width: 70%;"></div>
+            <div class="skeleton skeleton-button" style="margin-top: 14px;"></div>
+          </div>
+        </div>
+
+        <!-- Empty State Banner (No shops created yet) -->
+        <div class="empty-state-banner" *ngIf="!isLoadingShops && shops.length === 0">
+          <div class="empty-icon-large">🏪</div>
+          <h3>No Storefronts Created Yet</h3>
+          <p>Launch your first merchant shopfront to list products, configure coupons, and process customer orders on Bazario.</p>
+          <button type="button" class="btn-primary" (click)="addShop()">+ Open Your First Shopfront</button>
+        </div>
+
+        <!-- Filtered Empty State Banner (Shops exist, but no match for active filters) -->
+        <div class="empty-state-banner filtered-empty" *ngIf="!isLoadingShops && shops.length > 0 && filteredShops.length === 0">
+          <div class="empty-icon-large">🔍</div>
+          <h3>No Storefronts Match Your Filters</h3>
+          <p>We couldn't find any storefront matching your active search query or filter criteria.</p>
+          <button type="button" class="btn-primary" (click)="resetShopFilters()">✕ Reset All Filters</button>
+        </div>
+
+        <!-- Shop Cards Grid -->
+        <div class="shop-grid" *ngIf="!isLoadingShops && filteredShops.length > 0">
           <div
             class="shop-card"
-            *ngFor="let s of shops"
-            [ngClass]="{ selected: selectedShopId === s.id }"
-            (click)="selectShop(s)">
-            <div class="shop-card-top">
-              <div class="shop-logo">{{ s.logo }}</div>
-              <span class="badge" [ngClass]="'status-' + s.status.toLowerCase()">{{ s.status }}</span>
-            </div>
-            <h4>{{ s.shopName }}</h4>
-            <span class="product-cat">{{ s.category }}</span>
-            <p class="product-desc">{{ s.description }}</p>
+            *ngFor="let s of filteredShops"
+            [ngClass]="{ selected: selectedShopId === s.id }">
 
-            <div class="shop-card-details" *ngIf="selectedShopId === s.id">
-              <div class="profile-row"><span>Owner</span><strong>{{ s.ownerName }}</strong></div>
-              <div class="profile-row"><span>Email</span><strong>{{ s.email }}</strong></div>
-              <div class="profile-row"><span>Phone</span><strong>{{ s.phone }}</strong></div>
-              <div class="profile-row"><span>Address</span><strong>{{ s.address }}</strong></div>
+            <!-- Card Header -->
+            <div class="shop-card-header">
+              <div class="shop-logo-box">
+                <span class="shop-logo-icon">{{ s.logo || '🏪' }}</span>
+              </div>
+              <div class="shop-badges-col">
+                <span class="badge" [ngClass]="'status-' + s.status.toLowerCase()">{{ s.status }}</span>
+                <span class="context-tag" *ngIf="selectedShopId === s.id">✓ Active Context</span>
+              </div>
             </div>
 
-            <div class="product-actions" (click)="$event.stopPropagation()">
-              <button class="btn-ghost" (click)="editShop(s)">Edit</button>
-              <button class="btn-ghost danger" (click)="deleteShop(s)">Delete</button>
+            <!-- Card Body -->
+            <div class="shop-card-body">
+              <h4 class="shop-title" [title]="s.shopName">{{ s.shopName }}</h4>
+              <div class="shop-pills-row">
+                <span class="shop-category-tag">📁 {{ s.category || 'General' }}</span>
+                <span class="shop-id-tag">ID: #{{ s.id }}</span>
+              </div>
+              <p class="shop-desc" [title]="s.description || 'Verified merchant storefront on Bazario.'">
+                {{ s.description || 'Verified merchant storefront on Bazario.' }}
+              </p>
+
+              <!-- Shop Details Key-Value -->
+              <div class="shop-info-grid">
+                <div class="shop-info-row">
+                  <span class="info-label">Owner</span>
+                  <strong class="info-value" [title]="s.ownerName">{{ s.ownerName }}</strong>
+                </div>
+                <div class="shop-info-row">
+                  <span class="info-label">Email</span>
+                  <strong class="info-value email-value" [title]="s.email">{{ s.email }}</strong>
+                </div>
+                <div class="shop-info-row">
+                  <span class="info-label">Phone</span>
+                  <strong class="info-value">{{ s.phone || 'Not provided' }}</strong>
+                </div>
+                <div class="shop-info-row" *ngIf="s.address">
+                  <span class="info-label">Address</span>
+                  <strong class="info-value" [title]="s.address">{{ s.address }}</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Footer & Actions -->
+            <div class="shop-card-footer">
+              <button type="button"
+                      class="btn-context-action"
+                      [class.active-context]="selectedShopId === s.id"
+                      (click)="selectShop(s)"
+                      [disabled]="selectedShopId === s.id">
+                {{ selectedShopId === s.id ? '✓ Current Storefront Context' : '👉 Set as Active Storefront' }}
+              </button>
+
+              <div class="shop-action-toolbar">
+                <button type="button" class="shop-btn-action edit" (click)="editShop(s)" title="Edit shop details">
+                  <span>✏️</span> Edit
+                </button>
+                <button type="button" class="shop-btn-action toggle" (click)="toggleShopStatus(s)" [title]="s.status === 'Active' ? 'Deactivate shop' : 'Activate shop'">
+                  <span>{{ s.status === 'Active' ? '⏸️' : '▶️' }}</span>
+                  {{ s.status === 'Active' ? 'Deactivate' : 'Activate' }}
+                </button>
+                <button type="button" class="shop-btn-action delete danger" (click)="deleteShop(s)" title="Delete shop with confirmation">
+                  <span>🗑️</span> Delete
+                </button>
+              </div>
             </div>
           </div>
 
+          <!-- Create New Shop Card Tile -->
           <div class="shop-card create-shop-card" (click)="addShop()">
-            <span class="create-shop-icon">＋</span>
+            <span class="create-shop-icon">➕</span>
             <h4>Create a new shop</h4>
-            <p class="product-desc">Set up another storefront to sell a different range of products.</p>
-          </div>
-
-          <div class="empty-state" *ngIf="shops.length === 0">
-            <span class="empty-icon">🏪</span>
-            <h4>No shops yet</h4>
-            <p>Create your first vendor shop to start selling on Bazario.</p>
+            <p class="product-desc">Set up another storefront to sell a completely different range of products.</p>
+            <button type="button" class="btn-primary small" (click)="addShop(); $event.stopPropagation()" style="margin-top: 10px;">+ Open Shopfront</button>
           </div>
         </div>
       </section>
@@ -232,8 +465,8 @@
       <section *ngIf="activeSection === 'products'" class="section">
         <div class="section-head row">
           <div>
-            <h2>Products</h2>
-            <p>Manage your catalog, pricing and availability.</p>
+            <h2>Products Catalog</h2>
+            <p>Manage your catalog, stock and pricing for <strong>{{ selectedShopName }}</strong>.</p>
           </div>
           <button class="btn-primary" (click)="addProduct()">+ Add Product</button>
         </div>
@@ -241,13 +474,13 @@
         <div class="toolbar">
           <div class="search-box">
             <span>🔍</span>
-            <input type="text" placeholder="Search products..." [(ngModel)]="searchTerm" (ngModelChange)="searchProduct()">
+            <input type="text" placeholder="Search products..." [(ngModel)]="searchTerm">
           </div>
-          <select [(ngModel)]="categoryFilter" (change)="filterProducts()">
+          <select [(ngModel)]="categoryFilter">
             <option value="All">All Categories</option>
             <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
           </select>
-          <select [(ngModel)]="statusFilter" (change)="filterProducts()">
+          <select [(ngModel)]="statusFilter">
             <option value="All">All Status</option>
             <option *ngFor="let s of productStatuses" [value]="s">{{ s }}</option>
           </select>
@@ -255,8 +488,19 @@
 
         <div class="product-grid">
           <div class="product-card" *ngFor="let p of filteredProducts">
-            <div class="product-thumb">{{ p.image }}</div>
-            <span class="badge" [ngClass]="'status-' + p.status.toLowerCase().replace(' ', '-')">{{ p.status }}</span>
+            <div class="product-thumb">
+              <img *ngIf="p.image && (p.image.startsWith('http') || p.image.startsWith('/uploads') || p.image.startsWith('data:'))"
+                   [src]="p.image"
+                   [alt]="p.name"
+                   (error)="handleImgError($event, p)"
+                   style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;" />
+              <span *ngIf="!p.image || (!p.image.startsWith('http') && !p.image.startsWith('/uploads') && !p.image.startsWith('data:'))"
+                    style="font-size: 32px;">{{ p.image || '📦' }}</span>
+            </div>
+            <div class="product-card-badges">
+              <span class="badge" [ngClass]="'status-' + p.status.toLowerCase().replace(' ', '-')">{{ p.status }}</span>
+              <span class="product-shop-badge" *ngIf="p.shopName">🏪 {{ p.shopName }}</span>
+            </div>
             <h4>{{ p.name }}</h4>
             <span class="product-cat">{{ p.category }}</span>
             <p class="product-desc">{{ p.description }}</p>
@@ -285,9 +529,12 @@
 
       <!-- ================= ORDERS ================= -->
       <section *ngIf="activeSection === 'orders'" class="section">
-        <div class="section-head">
-          <h2>Orders</h2>
-          <p>Track and update customer orders in real time.</p>
+        <div class="section-head row">
+          <div>
+            <h2>Customer Orders</h2>
+            <p>Real-time orders assigned to <strong>{{ selectedShopName }}</strong>.</p>
+          </div>
+          <button class="btn-ghost" (click)="exportOrdersCSV()">📥 Export Orders (CSV)</button>
         </div>
 
         <div class="panel">
@@ -295,13 +542,13 @@
             <table>
               <thead>
               <tr>
-                <th>Order ID</th><th>Customer</th><th>Product</th><th>Qty</th><th>Amount</th>
-                <th>Date</th><th>Payment</th><th>Status</th><th>Update</th>
+                <th>Order Item ID</th><th>Customer</th><th>Product</th><th>Qty</th><th>Amount</th>
+                <th>Date</th><th>Payment</th><th>Status</th><th>Update Status</th>
               </tr>
               </thead>
               <tbody>
               <tr *ngFor="let o of orders">
-                <td>{{ o.id }}</td>
+                <td>#{{ o.id }}</td>
                 <td>{{ o.customer }}</td>
                 <td>{{ o.product }}</td>
                 <td>{{ o.quantity }}</td>
@@ -315,6 +562,9 @@
                   </select>
                 </td>
               </tr>
+              <tr *ngIf="orders.length === 0">
+                <td colspan="9" style="text-align: center; color: #64748b; padding: 24px;">No customer orders found for this storefront context.</td>
+              </tr>
               </tbody>
             </table>
           </div>
@@ -324,20 +574,20 @@
       <!-- ================= INVENTORY ================= -->
       <section *ngIf="activeSection === 'inventory'" class="section">
         <div class="section-head">
-          <h2>Inventory</h2>
-          <p>Keep stock levels accurate to avoid missed sales.</p>
+          <h2>Inventory Management</h2>
+          <p>Keep stock levels accurate to avoid missed sales. Changes save directly to MySQL.</p>
         </div>
 
         <div class="panel">
           <div class="table-wrap">
             <table>
               <thead>
-              <tr><th>Product</th><th>Current Stock</th><th>Minimum Stock</th><th>Status</th><th>Last Updated</th><th>Update Stock</th></tr>
+              <tr><th>Product</th><th>Current Stock</th><th>Minimum Stock</th><th>Status</th><th>Last Updated</th><th>Adjust Stock</th></tr>
               </thead>
               <tbody>
               <tr *ngFor="let item of inventory">
                 <td>{{ item.product }}</td>
-                <td>{{ item.currentStock }}</td>
+                <td><strong>{{ item.currentStock }}</strong> units</td>
                 <td>{{ item.minStock }}</td>
                 <td><span class="badge" [ngClass]="'stock-' + item.status.toLowerCase().replace(' ', '-')">{{ item.status }}</span></td>
                 <td>{{ item.lastUpdated }}</td>
@@ -346,17 +596,31 @@
                          (change)="updateStock(item, stockInput.value ? +stockInput.value : 0)">
                 </td>
               </tr>
+              <tr *ngIf="inventory.length === 0">
+                <td colspan="6" style="text-align: center; color: #64748b; padding: 24px;">No inventory items available in this context.</td>
+              </tr>
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- ================= SALES & EARNINGS ================= -->
+      <!-- ================= SALES & ANALYTICS ================= -->
       <section *ngIf="activeSection === 'sales'" class="section">
-        <div class="section-head">
-          <h2>Sales & Earnings</h2>
-          <p>A snapshot of how much {{ vendorProfile.shopName }} is earning.</p>
+        <div class="section-head row">
+          <div>
+            <h2>Sales & Analytics</h2>
+            <p>Real performance analytics for <strong>{{ selectedShopName }}</strong>.</p>
+          </div>
+          <div class="analytics-actions">
+            <div class="range-pills">
+              <button [class.active]="analyticsRange === 'today'" (click)="setAnalyticsRange('today')">Today</button>
+              <button [class.active]="analyticsRange === '7days'" (click)="setAnalyticsRange('7days')">7 Days</button>
+              <button [class.active]="analyticsRange === '30days'" (click)="setAnalyticsRange('30days')">30 Days</button>
+              <button [class.active]="analyticsRange === 'all'" (click)="setAnalyticsRange('all')">All Time</button>
+            </div>
+            <button class="btn-ghost" (click)="exportOrdersCSV()">📥 Export CSV</button>
+          </div>
         </div>
 
         <div class="mini-stats five">
@@ -368,83 +632,28 @@
         </div>
 
         <div class="panel">
-          <div class="panel-head"><h3>Weekly Sales Graph</h3></div>
+          <div class="panel-head">
+            <h3>Sales Trend</h3>
+            <span class="panel-note">Live order distribution</span>
+          </div>
           <div class="bar-chart large">
             <div class="bar-col" *ngFor="let day of salesOverview">
-              <div class="bar" [style.height.%]="day.value"></div>
+              <div class="bar" [style.height.%]="day.value > 0 ? (day.value > 100 ? 100 : day.value) : 8"></div>
               <span class="bar-label">{{ day.label }}</span>
             </div>
           </div>
         </div>
-      </section>
 
-      <!-- ================= REVIEWS ================= -->
-      <section *ngIf="activeSection === 'reviews'" class="section">
-        <div class="section-head">
-          <h2>Reviews & Ratings</h2>
-          <p>Respond to customers and build trust in your store.</p>
-        </div>
-
-        <div class="review-list">
-          <div class="review-card" *ngFor="let r of reviews">
-            <div class="review-top">
-              <div>
-                <strong>{{ r.customer }}</strong>
-                <span class="review-product">on {{ r.product }}</span>
-              </div>
-              <span class="stars">
-                <ng-container *ngFor="let s of [1,2,3,4,5]">{{ s <= r.rating ? '★' : '☆' }}</ng-container>
-              </span>
-            </div>
-            <p class="review-text">{{ r.review }}</p>
-            <span class="review-date">{{ r.date }}</span>
-
-            <div class="review-reply" *ngIf="r.reply">
-              <strong>Your reply</strong>
-              <p>{{ r.reply }}</p>
-            </div>
-
-            <div class="reply-form" *ngIf="!r.reply">
-              <textarea rows="2" placeholder="Write a reply to this customer..." [(ngModel)]="r.replyDraft"></textarea>
-              <button class="btn-primary small" (click)="replyToReview(r)">Reply</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= COUPONS ================= -->
-      <section *ngIf="activeSection === 'coupons'" class="section">
-        <div class="section-head row">
-          <div>
-            <h2>Coupons & Offers</h2>
-            <p>Create promotions to bring in more orders.</p>
-          </div>
-          <button class="btn-primary" (click)="addCoupon()">+ Add Coupon</button>
-        </div>
-
-        <div class="panel">
+        <div class="panel" *ngIf="bestSellingProducts.length > 0">
+          <div class="panel-head"><h3>Top Performing Products</h3></div>
           <div class="table-wrap">
             <table>
-              <thead>
-              <tr><th>Code</th><th>Discount</th><th>Min Order</th><th>Start</th><th>Expiry</th><th>Status</th><th>Actions</th></tr>
-              </thead>
+              <thead><tr><th>Product</th><th>Units Sold</th><th>Total Revenue</th></tr></thead>
               <tbody>
-              <tr *ngFor="let c of coupons">
-                <td class="coupon-code">{{ c.code }}</td>
-                <td>{{ c.discount }}%</td>
-                <td>₹{{ c.minOrder }}</td>
-                <td>{{ c.startDate }}</td>
-                <td>{{ c.expiryDate }}</td>
-                <td>
-                  <label class="switch">
-                    <input type="checkbox" [checked]="c.status === 'Active'" (change)="toggleCouponStatus(c)">
-                    <span class="slider"></span>
-                  </label>
-                </td>
-                <td class="row-actions">
-                  <button class="btn-ghost" (click)="editCoupon(c)">Edit</button>
-                  <button class="btn-ghost danger" (click)="deleteCoupon(c)">Delete</button>
-                </td>
+              <tr *ngFor="let p of bestSellingProducts">
+                <td>{{ p.name }}</td>
+                <td><strong>{{ p.sold }}</strong> units</td>
+                <td>₹{{ p.revenue | number }}</td>
               </tr>
               </tbody>
             </table>
@@ -452,75 +661,424 @@
         </div>
       </section>
 
-      <!-- ================= AI ASSISTANT ================= -->
-      <section *ngIf="activeSection === 'ai'" class="section ai-section">
-        <div class="section-head">
-          <h2>🤖 AI Assistant</h2>
-          <p>Your always-on co-pilot for pricing, demand and stock decisions.</p>
+      <!-- ================= CUSTOMERS MANAGEMENT ================= -->
+      <section *ngIf="activeSection === 'customers'" class="section">
+        <div class="section-head row">
+          <div>
+            <h2>👥 Customers Management</h2>
+            <p>Verified buyers who have purchased products from <strong>{{ selectedShopName }}</strong>.</p>
+          </div>
+          <div class="header-stat-pill">
+            <span>Total Buyers:</span> <strong>{{ customers.length }}</strong>
+          </div>
         </div>
 
-        <div class="ai-grid">
-          <div class="ai-card highlight">
-            <span class="ai-tag">Sales Insight</span>
-            <div class="ai-insight-value">{{ aiInsights.salesGrowth }}</div>
-            <p>Sales growth this month</p>
-            <div class="ai-insight-row"><span>Best seller</span><strong>{{ aiInsights.bestSeller }}</strong></div>
-            <div class="ai-insight-row"><span>Slow moving</span><strong>{{ aiInsights.slowMover }}</strong></div>
+        <!-- Filter & Search Toolbar -->
+        <div class="toolbar-panel">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search customer by name, email or phone..."
+                   [(ngModel)]="customerSearch" (ngModelChange)="loadCustomersFromDatabase()" />
           </div>
-
-          <div class="ai-card">
-            <span class="ai-tag">Demand Prediction</span>
-            <ul class="demand-list">
-              <li *ngFor="let d of demandPrediction">
-                <span>{{ d.product }}</span>
-                <span class="demand-pill" [ngClass]="'demand-' + d.demand.toLowerCase()">{{ d.demand }}</span>
-              </li>
-            </ul>
+          <div class="filter-group">
+            <select [(ngModel)]="customerStatusFilter" (ngModelChange)="loadCustomersFromDatabase()">
+              <option value="ALL">All Customers</option>
+              <option value="Repeat Buyer">Repeat Buyers</option>
+              <option value="New Buyer">New Buyers</option>
+            </select>
+            <select [(ngModel)]="customerSortBy" (ngModelChange)="loadCustomersFromDatabase()">
+              <option value="recent">Sort by: Recent Purchases</option>
+              <option value="spending">Sort by: Highest Spent</option>
+              <option value="orders">Sort by: Most Orders</option>
+              <option value="name">Sort by: Customer Name</option>
+            </select>
           </div>
+        </div>
 
-          <div class="ai-card">
-            <span class="ai-tag">Stock Prediction</span>
-            <h4>{{ stockPrediction.product }}</h4>
-            <p>Current stock: <strong>{{ stockPrediction.currentStock }}</strong></p>
-            <p>Estimated days remaining: <strong>{{ stockPrediction.daysRemaining }}</strong></p>
-            <div class="ai-recommend">{{ stockPrediction.recommendation }}</div>
-          </div>
+        <!-- Customers Table -->
+        <div class="panel">
+          <div class="table-wrap" *ngIf="customers.length > 0">
+            <table>
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Contact</th>
+                  <th>Store</th>
+                  <th>Orders</th>
+                  <th>Total Spent</th>
+                  <th>Last Purchase</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let c of paginatedCustomers">
+                  <td>
+                    <div class="customer-info-cell">
+                      <div class="avatar-circle">{{ c.customerName ? c.customerName.charAt(0).toUpperCase() : 'U' }}</div>
+                      <div>
+                        <strong>{{ c.customerName }}</strong>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="contact-sub">{{ c.customerEmail }}</div>
+                    <div class="contact-sub text-muted" *ngIf="c.customerPhone && c.customerPhone !== 'N/A'">{{ c.customerPhone }}</div>
+                  </td>
+                  <td><span class="badge badge-shop">{{ c.shopName }}</span></td>
+                  <td><strong>{{ c.totalOrders }}</strong></td>
+                  <td><span class="price-val">₹{{ c.totalSpent | number:'1.2-2' }}</span></td>
+                  <td><span class="date-text">{{ c.lastPurchaseDate ? c.lastPurchaseDate.substring(0, 10) : 'Recent' }}</span></td>
+                  <td>
+                    <span class="badge" [ngClass]="c.customerStatus === 'Repeat Buyer' ? 'badge-repeat' : 'badge-new'">
+                      {{ c.customerStatus }}
+                    </span>
+                  </td>
+                  <td>
+                    <button class="btn-ghost small" (click)="viewCustomerDetails(c)">
+                      👁️ View Details
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
 
-          <div class="ai-card">
-            <span class="ai-tag">Price Suggestion</span>
-            <h4>{{ priceSuggestion.product }}</h4>
-            <p>Current price: <strong>₹{{ priceSuggestion.currentPrice }}</strong></p>
-            <p>AI suggested price: <strong>₹{{ priceSuggestion.suggestedMin }} – ₹{{ priceSuggestion.suggestedMax }}</strong></p>
-            <p>Demand: <span class="demand-pill demand-high">{{ priceSuggestion.demand }}</span></p>
-            <button class="btn-primary small" *ngIf="!priceSuggestion.applied" (click)="applyPriceSuggestion()">Apply Suggestion</button>
-            <span class="applied-note" *ngIf="priceSuggestion.applied">✓ Applied</span>
-          </div>
-
-          <div class="ai-card wide">
-            <span class="ai-tag">AI Description Generator</span>
-            <div class="desc-form">
-              <input type="text" placeholder="Product name" [(ngModel)]="descriptionForm.name">
-              <input type="text" placeholder="Category" [(ngModel)]="descriptionForm.category">
-              <input type="text" placeholder="Key features" [(ngModel)]="descriptionForm.features">
-              <input type="text" placeholder="Keywords" [(ngModel)]="descriptionForm.keywords">
+            <!-- Pagination Bar -->
+            <div class="pagination-bar" *ngIf="totalCustomerPages > 1">
+              <button class="btn-ghost small" [disabled]="customerPage === 1" (click)="setCustomerPage(customerPage - 1)">
+                ◀ Prev
+              </button>
+              <span class="page-indicator">Page {{ customerPage }} of {{ totalCustomerPages }}</span>
+              <button class="btn-ghost small" [disabled]="customerPage === totalCustomerPages" (click)="setCustomerPage(customerPage + 1)">
+                Next ▶
+              </button>
             </div>
-            <button class="btn-primary small" (click)="generateAIDescription()">Generate Description</button>
-            <div class="generated-box" *ngIf="generatedDescription">{{ generatedDescription }}</div>
           </div>
 
-          <div class="ai-card wide chat-card">
-            <span class="ai-tag">Ask Bazario AI</span>
-            <div class="chat-window">
-              <div class="chat-bubble" *ngFor="let m of chatMessages" [ngClass]="m.sender">
-                {{ m.text }}
+          <!-- Empty State -->
+          <div class="empty-state-card" *ngIf="customers.length === 0 && !isLoadingCustomers">
+            <span class="empty-icon">👥</span>
+            <h3>No Customers Found</h3>
+            <p>Customers who purchase products from your shops will automatically appear here with their verified purchase history.</p>
+          </div>
+
+          <!-- Loading State -->
+          <div class="loading-state-card" *ngIf="isLoadingCustomers">
+            <p>Loading customers from MySQL database...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= REVIEWS & RATINGS ================= -->
+      <section *ngIf="activeSection === 'reviews'" class="section">
+        <div class="section-head row">
+          <div>
+            <h2>⭐ Reviews & Ratings</h2>
+            <p>Verified buyer ratings and authentic feedback for <strong>{{ selectedShopName }}</strong>.</p>
+          </div>
+        </div>
+
+        <!-- Rating Dashboard Overview Cards -->
+        <div class="rating-overview-grid">
+          <div class="rating-score-card">
+            <div class="big-score">{{ reviewsSummary.averageRating | number:'1.1-1' }}</div>
+            <div class="stars-gold">
+              <ng-container *ngFor="let s of [1,2,3,4,5]">{{ s <= reviewsSummary.averageRating ? '★' : '☆' }}</ng-container>
+            </div>
+            <p class="score-sub">Based on <strong>{{ reviewsSummary.totalReviews }}</strong> verified reviews</p>
+          </div>
+
+          <div class="rating-bars-card">
+            <div class="bar-row" (click)="filterReviewsByStar(5)">
+              <span class="bar-label">5 Stars</span>
+              <div class="bar-track"><div class="bar-fill" [style.width.%]="reviewsSummary.percent5"></div></div>
+              <span class="bar-count">{{ reviewsSummary.count5 }} ({{ reviewsSummary.percent5 }}%)</span>
+            </div>
+            <div class="bar-row" (click)="filterReviewsByStar(4)">
+              <span class="bar-label">4 Stars</span>
+              <div class="bar-track"><div class="bar-fill" [style.width.%]="reviewsSummary.percent4"></div></div>
+              <span class="bar-count">{{ reviewsSummary.count4 }} ({{ reviewsSummary.percent4 }}%)</span>
+            </div>
+            <div class="bar-row" (click)="filterReviewsByStar(3)">
+              <span class="bar-label">3 Stars</span>
+              <div class="bar-track"><div class="bar-fill" [style.width.%]="reviewsSummary.percent3"></div></div>
+              <span class="bar-count">{{ reviewsSummary.count3 }} ({{ reviewsSummary.percent3 }}%)</span>
+            </div>
+            <div class="bar-row" (click)="filterReviewsByStar(2)">
+              <span class="bar-label">2 Stars</span>
+              <div class="bar-track"><div class="bar-fill" [style.width.%]="reviewsSummary.percent2"></div></div>
+              <span class="bar-count">{{ reviewsSummary.count2 }} ({{ reviewsSummary.percent2 }}%)</span>
+            </div>
+            <div class="bar-row" (click)="filterReviewsByStar(1)">
+              <span class="bar-label">1 Star</span>
+              <div class="bar-track"><div class="bar-fill" [style.width.%]="reviewsSummary.percent1"></div></div>
+              <span class="bar-count">{{ reviewsSummary.count1 }} ({{ reviewsSummary.percent1 }}%)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Toolbar / Star Filters -->
+        <div class="toolbar-panel" style="margin-top: 18px;">
+          <div class="pill-group">
+            <button class="pill-btn" [class.active]="reviewStarFilter === null" (click)="filterReviewsByStar(null)">All ({{ reviewsSummary.totalReviews }})</button>
+            <button class="pill-btn" [class.active]="reviewStarFilter === 5" (click)="filterReviewsByStar(5)">5 ★ ({{ reviewsSummary.count5 }})</button>
+            <button class="pill-btn" [class.active]="reviewStarFilter === 4" (click)="filterReviewsByStar(4)">4 ★ ({{ reviewsSummary.count4 }})</button>
+            <button class="pill-btn" [class.active]="reviewStarFilter === 3" (click)="filterReviewsByStar(3)">3 ★ ({{ reviewsSummary.count3 }})</button>
+            <button class="pill-btn" [class.active]="reviewStarFilter === 2" (click)="filterReviewsByStar(2)">2 ★ ({{ reviewsSummary.count2 }})</button>
+            <button class="pill-btn" [class.active]="reviewStarFilter === 1" (click)="filterReviewsByStar(1)">1 ★ ({{ reviewsSummary.count1 }})</button>
+          </div>
+          <div class="filter-group">
+            <select [(ngModel)]="reviewSort" (ngModelChange)="loadReviewsFromDatabase()">
+              <option value="newest">Newest First</option>
+              <option value="highest">Highest Rating</option>
+              <option value="lowest">Lowest Rating</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Review List -->
+        <div class="review-list">
+          <div class="review-card" *ngFor="let r of paginatedReviews">
+            <div class="review-top">
+              <div class="customer-info-cell">
+                <div class="avatar-circle">{{ r.customer ? r.customer.charAt(0).toUpperCase() : 'C' }}</div>
+                <div>
+                  <div class="review-author-row">
+                    <strong>{{ r.customer }}</strong>
+                    <span class="badge badge-verified" *ngIf="r.verifiedPurchase">✓ Verified Purchase</span>
+                  </div>
+                  <span class="review-product" *ngIf="r.product">for <strong>{{ r.product }}</strong></span>
+                  <span class="badge badge-shop" style="margin-left: 6px;" *ngIf="r.shopName">{{ r.shopName }}</span>
+                </div>
+              </div>
+              <div class="stars-gold">
+                <ng-container *ngFor="let s of [1,2,3,4,5]">{{ s <= r.rating ? '★' : '☆' }}</ng-container>
               </div>
             </div>
-            <div class="chip-row">
-              <button class="chip" *ngFor="let q of suggestedQuestions" (click)="askAI(q)">{{ q }}</button>
+
+            <h4 class="review-heading" *ngIf="r.title">{{ r.title }}</h4>
+            <p class="review-text">{{ r.review }}</p>
+            <span class="review-date">Reviewed on {{ r.date }}</span>
+
+            <!-- Existing Vendor Reply -->
+            <div class="review-reply" *ngIf="r.reply">
+              <div class="reply-header">
+                <strong>🏪 Seller Studio Response</strong>
+                <span class="reply-date" *ngIf="r.replyDate">{{ r.replyDate ? r.replyDate.substring(0, 10) : '' }}</span>
+              </div>
+              <p>{{ r.reply }}</p>
             </div>
+
+            <!-- Reply Form -->
+            <div class="reply-form" *ngIf="!r.reply">
+              <textarea rows="2" placeholder="Write an official response to this customer..." [(ngModel)]="r.replyDraft"></textarea>
+              <button class="btn-primary small" (click)="replyToReview(r)">Post Reply</button>
+            </div>
+          </div>
+
+          <!-- Empty Reviews -->
+          <div class="empty-state-card" *ngIf="reviews.length === 0 && !isLoadingReviews">
+            <span class="empty-icon">⭐</span>
+            <h3>No Reviews Yet</h3>
+            <p>Customers can submit reviews after receiving their orders. Verified feedback will be presented here dynamically.</p>
+          </div>
+        </div>
+
+        <!-- Pagination for Reviews -->
+        <div class="pagination-bar" *ngIf="totalReviewPages > 1">
+          <button class="btn-ghost small" [disabled]="reviewPage === 1" (click)="setReviewPage(reviewPage - 1)">◀ Prev</button>
+          <span class="page-indicator">Page {{ reviewPage }} of {{ totalReviewPages }}</span>
+          <button class="btn-ghost small" [disabled]="reviewPage === totalReviewPages" (click)="setReviewPage(reviewPage + 1)">Next ▶</button>
+        </div>
+      </section>
+
+      <!-- ================= COUPONS & OFFERS ================= -->
+      <section *ngIf="activeSection === 'coupons'" class="section">
+        <div class="section-head row">
+          <div>
+            <h2>🎟️ Coupons & Offers Management</h2>
+            <p>Create and orchestrate discount promotions for <strong>{{ selectedShopName }}</strong>.</p>
+          </div>
+          <button class="btn-primary" (click)="addCoupon()">+ Create Coupon</button>
+        </div>
+
+        <!-- Coupon Statistics Dashboard Cards -->
+        <div class="stats-row" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 20px;">
+          <div class="stat-card">
+            <span class="stat-icon">🎟️</span>
+            <div class="stat-content">
+              <span class="stat-title">Total Coupons</span>
+              <span class="stat-val">{{ couponStats.totalCoupons }}</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">🟢</span>
+            <div class="stat-content">
+              <span class="stat-title">Active</span>
+              <span class="stat-val">{{ couponStats.activeCoupons }}</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">⏳</span>
+            <div class="stat-content">
+              <span class="stat-title">Expired</span>
+              <span class="stat-val">{{ couponStats.expiredCoupons }}</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">📅</span>
+            <div class="stat-content">
+              <span class="stat-title">Scheduled</span>
+              <span class="stat-val">{{ couponStats.scheduledCoupons }}</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">📈</span>
+            <div class="stat-content">
+              <span class="stat-title">Total Usages</span>
+              <span class="stat-val">{{ couponStats.totalUsage }}</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">💰</span>
+            <div class="stat-content">
+              <span class="stat-title">Discount Given</span>
+              <span class="stat-val">₹{{ couponStats.totalDiscountGiven | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="toolbar-panel">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search coupon code or title..." [(ngModel)]="couponSearch" />
+          </div>
+          <div class="filter-group">
+            <select [(ngModel)]="couponStatusFilter">
+              <option value="ALL">All Statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="DISABLED">Disabled</option>
+            </select>
+            <select [(ngModel)]="couponTypeFilter">
+              <option value="ALL">All Discount Types</option>
+              <option value="PERCENTAGE">Percentage (%)</option>
+              <option value="FIXED_AMOUNT">Fixed Amount (₹)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Coupons Table -->
+        <div class="panel">
+          <div class="table-wrap" *ngIf="filteredCouponsList.length > 0">
+            <table>
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Title & Scope</th>
+                  <th>Discount</th>
+                  <th>Min Order</th>
+                  <th>Validity</th>
+                  <th>Usage</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let c of filteredCouponsList">
+                  <td>
+                    <span class="ticket-code">{{ c.code }}</span>
+                  </td>
+                  <td>
+                    <strong>{{ c.title || c.code }}</strong>
+                    <div class="contact-sub text-muted">
+                      Scope: {{ c.applicableProductsType === 'SPECIFIC' ? 'Selected Products' : 'All Shop Products' }}
+                    </div>
+                  </td>
+                  <td>
+                    <strong class="price-val">
+                      {{ c.discountType === 'FIXED_AMOUNT' ? '₹' + c.discount : c.discount + '%' }}
+                    </strong>
+                    <div class="contact-sub text-muted" *ngIf="c.maxDiscountAmount">Max: ₹{{ c.maxDiscountAmount }}</div>
+                  </td>
+                  <td>₹{{ c.minOrder || 0 }}</td>
+                  <td>
+                    <div class="date-text">{{ c.startDate ? c.startDate.substring(0, 10) : 'Today' }}</div>
+                    <div class="date-text text-muted">to {{ c.expiryDate ? c.expiryDate.substring(0, 10) : 'No Expiry' }}</div>
+                  </td>
+                  <td>
+                    <strong>{{ c.usageCount || 0 }}</strong>
+                    <span class="text-muted" *ngIf="c.maxUsageLimit"> / {{ c.maxUsageLimit }}</span>
+                  </td>
+                  <td>
+                    <label class="switch">
+                      <input type="checkbox" [checked]="c.status === 'Active'" (change)="toggleCouponStatus(c)">
+                      <span class="slider"></span>
+                    </label>
+                  </td>
+                  <td class="row-actions">
+                    <button class="btn-ghost" (click)="editCoupon(c)">Edit</button>
+                    <button class="btn-ghost danger" (click)="deleteCoupon(c)">Delete</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty State -->
+          <div class="empty-state-card" *ngIf="filteredCouponsList.length === 0 && !isLoadingCoupons">
+            <span class="empty-icon">🎟️</span>
+            <h3>No Coupons Found</h3>
+            <p>Create attractive promotional codes to boost sales for your store. Customers can apply valid coupons during checkout.</p>
+            <button class="btn-primary" style="margin-top: 12px;" (click)="addCoupon()">+ Create First Coupon</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= AI ASSISTANT ================= -->
+      <section *ngIf="activeSection === 'ai'" class="section ai-section">
+        <div class="section-head row">
+          <div>
+            <h2>🤖 Bazario AI Assistant</h2>
+            <p>Your 24/7 intelligent Seller Studio guide. Click any question below for verified store answers.</p>
+          </div>
+          <button class="btn-ghost small" (click)="clearChat()">🗑️ Clear Chat</button>
+        </div>
+
+        <div class="ai-assistant-container">
+          <!-- Suggested FAQ Questions Grid (12 Questions) -->
+          <div class="faq-suggestions-box">
+            <h4 class="faq-title">💡 Suggested Questions (Click any question to ask):</h4>
+            <div class="faq-grid">
+              <button type="button" class="faq-chip-btn" *ngFor="let item of faqDatabase" (click)="askAI(item.q)">
+                <span class="chip-q-icon">💬</span>
+                <span class="chip-q-text">{{ item.q }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Chat Window -->
+          <div class="ai-chat-card">
+            <div class="chat-header">
+              <div class="chat-avatar">🤖</div>
+              <div class="chat-info">
+                <strong>Bazario Seller Studio Assistant</strong>
+                <span class="online-status">● Ready to help</span>
+              </div>
+            </div>
+
+            <div class="chat-window">
+              <div class="chat-bubble" *ngFor="let m of chatMessages" [ngClass]="m.sender">
+                <div class="bubble-sender-label">{{ m.sender === 'ai' ? '🤖 Assistant' : '👤 You' }}</div>
+                <div class="bubble-text">{{ m.text }}</div>
+              </div>
+            </div>
+
+            <!-- Free-form input -->
             <div class="chat-input-row">
-              <input type="text" placeholder="Ask about your store..." [(ngModel)]="chatInput" (keyup.enter)="askAI()">
-              <button class="btn-primary small" (click)="askAI()">Send</button>
+              <input type="text" placeholder="Type a question about shops, products, orders, stock, or coupons..."
+                     [(ngModel)]="chatInput" (keyup.enter)="askAI()" />
+              <button class="btn-primary" (click)="askAI()">Send</button>
             </div>
           </div>
         </div>
@@ -557,16 +1115,16 @@
       <section *ngIf="activeSection === 'profile'" class="section">
         <div class="section-head">
           <h2>Vendor Profile</h2>
-          <p>Keep your shop details up to date for customers and Bazario.</p>
+          <p>Merchant account details verified on Bazario.</p>
         </div>
 
         <div class="panel profile-panel" *ngIf="!isEditingProfile">
-          <div class="profile-row"><span>Shop Name</span><strong>{{ vendorProfile.shopName }}</strong></div>
+          <div class="profile-row"><span>Account Name</span><strong>{{ vendorProfile.shopName }}</strong></div>
           <div class="profile-row"><span>Owner Name</span><strong>{{ vendorProfile.ownerName }}</strong></div>
           <div class="profile-row"><span>Email</span><strong>{{ vendorProfile.email }}</strong></div>
           <div class="profile-row"><span>Phone</span><strong>{{ vendorProfile.phone }}</strong></div>
           <div class="profile-row"><span>Address</span><strong>{{ vendorProfile.address }}</strong></div>
-          <div class="profile-row"><span>Shop Description</span><strong>{{ vendorProfile.description }}</strong></div>
+          <div class="profile-row"><span>Description</span><strong>{{ vendorProfile.description }}</strong></div>
 
           <div class="profile-actions">
             <button class="btn-primary" (click)="editProfile()">Edit Profile</button>
@@ -582,17 +1140,312 @@
         </div>
 
         <div class="panel profile-panel" *ngIf="isEditingProfile">
-          <label>Shop Name<input type="text" [(ngModel)]="profileDraft.shopName"></label>
+          <label>Account Name<input type="text" [(ngModel)]="profileDraft.shopName"></label>
           <label>Owner Name<input type="text" [(ngModel)]="profileDraft.ownerName"></label>
           <label>Email<input type="email" [(ngModel)]="profileDraft.email"></label>
           <label>Phone<input type="text" [(ngModel)]="profileDraft.phone"></label>
           <label>Address<input type="text" [(ngModel)]="profileDraft.address"></label>
-          <label>Shop Description<textarea rows="3" [(ngModel)]="profileDraft.description"></textarea></label>
+          <label>Description<textarea rows="3" [(ngModel)]="profileDraft.description"></textarea></label>
 
           <div class="profile-actions">
             <button class="btn-primary" (click)="saveProfile()">Save Changes</button>
             <button class="btn-ghost" (click)="cancelEditProfile()">Cancel</button>
           </div>
+        </div>
+      </section>
+
+      <!-- ================= SETTINGS ================= -->
+      <section *ngIf="activeSection === 'settings'" class="section settings-section">
+        <div class="section-head">
+          <h2>Vendor Studio Settings</h2>
+          <p>Manage your account credentials, visual theme, notification alerts, and storefront preferences.</p>
+        </div>
+
+        <!-- Settings Sub-Navigation Tabs -->
+        <div class="settings-tabs-bar">
+          <button class="settings-tab-pill" [class.active]="settingsTab === 'account'" (click)="selectSettingsTab('account')">
+            <span class="tab-icon">👤</span> Account Settings
+          </button>
+          <button class="settings-tab-pill" [class.active]="settingsTab === 'appearance'" (click)="selectSettingsTab('appearance')">
+            <span class="tab-icon">🎨</span> Appearance & Theme
+          </button>
+          <button class="settings-tab-pill" [class.active]="settingsTab === 'notifications'" (click)="selectSettingsTab('notifications')">
+            <span class="tab-icon">🔔</span> Notifications
+          </button>
+          <button class="settings-tab-pill" [class.active]="settingsTab === 'security'" (click)="selectSettingsTab('security')">
+            <span class="tab-icon">🔒</span> Security & Password
+          </button>
+          <button class="settings-tab-pill" [class.active]="settingsTab === 'preferences'" (click)="selectSettingsTab('preferences')">
+            <span class="tab-icon">🏪</span> Storefront Preferences
+          </button>
+        </div>
+
+        <!-- A. ACCOUNT SETTINGS -->
+        <div class="settings-panel" *ngIf="settingsTab === 'account'">
+          <div class="settings-panel-head">
+            <h3>Merchant Profile & Business Identity</h3>
+            <p>Your business name, registered owner, email, and contact address on Bazario.</p>
+          </div>
+
+          <form class="settings-form" (ngSubmit)="saveAccountSettings()">
+            <div class="form-grid-2">
+              <label class="form-group">
+                <span class="label-text">Merchant Account / Shop Name *</span>
+                <input type="text" [(ngModel)]="accountForm.shopName" name="shopName" required placeholder="e.g. Bazario Gadgets Studio" />
+              </label>
+
+              <label class="form-group">
+                <span class="label-text">Owner Name *</span>
+                <input type="text" [(ngModel)]="accountForm.ownerName" name="ownerName" required placeholder="e.g. Dibyaranjan Sahoo" />
+              </label>
+            </div>
+
+            <div class="form-grid-2">
+              <label class="form-group">
+                <span class="label-text">Business Email Address *</span>
+                <input type="email" [(ngModel)]="accountForm.email" name="email" required placeholder="e.g. vendor@bazario.in" />
+              </label>
+
+              <label class="form-group">
+                <span class="label-text">Contact Phone Number</span>
+                <input type="text" [(ngModel)]="accountForm.phone" name="phone" placeholder="e.g. +91 98765 43210" />
+              </label>
+            </div>
+
+            <label class="form-group">
+              <span class="label-text">Operating Business Address</span>
+              <input type="text" [(ngModel)]="accountForm.address" name="address" placeholder="e.g. Infocity Road, Patia, Bhubaneswar, Odisha 751024" />
+            </label>
+
+            <label class="form-group">
+              <span class="label-text">Public Merchant Description</span>
+              <textarea rows="3" [(ngModel)]="accountForm.description" name="description" placeholder="Brief description of your vendor storefronts and product specialties."></textarea>
+            </label>
+
+            <div class="settings-actions">
+              <button type="submit" class="btn-primary" [disabled]="isSavingAccount">
+                {{ isSavingAccount ? 'Saving...' : '💾 Save Account Settings' }}
+              </button>
+              <button type="button" class="btn-ghost" (click)="resetAccountForm()">Reset Changes</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- B. APPEARANCE SETTINGS -->
+        <div class="settings-panel" *ngIf="settingsTab === 'appearance'">
+          <div class="settings-panel-head">
+            <h3>Interface Theme & Display Modes</h3>
+            <p>Customize the visual theme of your Vendor Studio. Your preference applies instantly and persists across sessions.</p>
+          </div>
+
+          <div class="theme-options-grid">
+            <div class="theme-card" [class.active]="themeMode === 'light'" (click)="applyTheme('light')">
+              <div class="theme-card-preview light-preview">
+                <div class="preview-sidebar"></div>
+                <div class="preview-body">
+                  <div class="preview-bar"></div>
+                  <div class="preview-rect"></div>
+                </div>
+              </div>
+              <div class="theme-card-info">
+                <h4>☀️ Light Mode</h4>
+                <p>Clean, warm cream background optimized for daylight and high-contrast readability.</p>
+                <span class="theme-radio">{{ themeMode === 'light' ? '● Active' : '○ Select' }}</span>
+              </div>
+            </div>
+
+            <div class="theme-card" [class.active]="themeMode === 'dark'" (click)="applyTheme('dark')">
+              <div class="theme-card-preview dark-preview">
+                <div class="preview-sidebar"></div>
+                <div class="preview-body">
+                  <div class="preview-bar"></div>
+                  <div class="preview-rect"></div>
+                </div>
+              </div>
+              <div class="theme-card-info">
+                <h4>🌙 Dark Mode</h4>
+                <p>Deep emerald-slate theme designed to reduce eye strain in low-light environments.</p>
+                <span class="theme-radio">{{ themeMode === 'dark' ? '● Active' : '○ Select' }}</span>
+              </div>
+            </div>
+
+            <div class="theme-card" [class.active]="themeMode === 'system'" (click)="applyTheme('system')">
+              <div class="theme-card-preview system-preview">
+                <div class="preview-split-light"></div>
+                <div class="preview-split-dark"></div>
+              </div>
+              <div class="theme-card-info">
+                <h4>💻 System Default</h4>
+                <p>Automatically match your operating system's light or dark mode setting.</p>
+                <span class="theme-radio">{{ themeMode === 'system' ? '● Active' : '○ Select' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- C. NOTIFICATION SETTINGS -->
+        <div class="settings-panel" *ngIf="settingsTab === 'notifications'">
+          <div class="settings-panel-head">
+            <h3>Automated Alerts & Push Notifications</h3>
+            <p>Control the alerts generated in your Seller Studio notification center.</p>
+          </div>
+
+          <div class="notification-switch-list">
+            <div class="notification-switch-item">
+              <div class="switch-info">
+                <strong>🛒 Customer Order Alerts</strong>
+                <span>Receive instant notification badges whenever a customer places a new order.</span>
+              </div>
+              <label class="switch-toggle">
+                <input type="checkbox" [(ngModel)]="notificationSettings.orderAlerts" (change)="saveNotificationPreferences()" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="notification-switch-item">
+              <div class="switch-info">
+                <strong>👥 New Customer Registrations</strong>
+                <span>Get notified when a new customer makes their first purchase in your shopfront.</span>
+              </div>
+              <label class="switch-toggle">
+                <input type="checkbox" [(ngModel)]="notificationSettings.customerAlerts" (change)="saveNotificationPreferences()" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="notification-switch-item">
+              <div class="switch-info">
+                <strong>⚠️ Low Inventory & Out-of-Stock Warnings</strong>
+                <span>Alert when product inventory levels drop below 10 units or reach zero.</span>
+              </div>
+              <label class="switch-toggle">
+                <input type="checkbox" [(ngModel)]="notificationSettings.lowStockAlerts" (change)="saveNotificationPreferences()" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="notification-switch-item">
+              <div class="switch-info">
+                <strong>⭐ Customer Reviews & Ratings</strong>
+                <span>Receive notifications whenever a customer leaves feedback on your products.</span>
+              </div>
+              <label class="switch-toggle">
+                <input type="checkbox" [(ngModel)]="notificationSettings.reviewAlerts" (change)="saveNotificationPreferences()" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="notification-switch-item">
+              <div class="switch-info">
+                <strong>🎟️ Coupon Expiry & Redemption Alerts</strong>
+                <span>Alerts when promo coupons reach usage limits or expire.</span>
+              </div>
+              <label class="switch-toggle">
+                <input type="checkbox" [(ngModel)]="notificationSettings.couponAlerts" (change)="saveNotificationPreferences()" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="notification-switch-item">
+              <div class="switch-info">
+                <strong>✉️ Email Digest & Summary Reports</strong>
+                <span>Periodic summary email of weekly sales and order orchestration.</span>
+              </div>
+              <label class="switch-toggle">
+                <input type="checkbox" [(ngModel)]="notificationSettings.emailReports" (change)="saveNotificationPreferences()" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- D. SECURITY SETTINGS -->
+        <div class="settings-panel" *ngIf="settingsTab === 'security'">
+          <div class="settings-panel-head">
+            <h3>Password & Account Security</h3>
+            <p>Manage your login credentials. We recommend updating your password periodically.</p>
+          </div>
+
+          <form class="settings-form" (ngSubmit)="changeSecurityPassword()">
+            <label class="form-group">
+              <span class="label-text">Current Password *</span>
+              <div class="password-input-wrap">
+                <input [type]="securityForm.showCurrent ? 'text' : 'password'" [(ngModel)]="securityForm.currentPassword" name="currentPassword" required placeholder="Enter existing password" />
+                <button type="button" class="btn-pwd-peek" (click)="securityForm.showCurrent = !securityForm.showCurrent">
+                  {{ securityForm.showCurrent ? '👁️' : '👁️‍🗨️' }}
+                </button>
+              </div>
+            </label>
+
+            <div class="form-grid-2">
+              <label class="form-group">
+                <span class="label-text">New Password * (Min 6 characters)</span>
+                <div class="password-input-wrap">
+                  <input [type]="securityForm.showNew ? 'text' : 'password'" [(ngModel)]="securityForm.newPassword" name="newPassword" required minlength="6" placeholder="Enter strong new password" />
+                  <button type="button" class="btn-pwd-peek" (click)="securityForm.showNew = !securityForm.showNew">
+                    {{ securityForm.showNew ? '👁️' : '👁️‍🗨️' }}
+                  </button>
+                </div>
+              </label>
+
+              <label class="form-group">
+                <span class="label-text">Confirm New Password *</span>
+                <div class="password-input-wrap">
+                  <input [type]="securityForm.showConfirm ? 'text' : 'password'" [(ngModel)]="securityForm.confirmPassword" name="confirmPassword" required placeholder="Repeat new password" />
+                  <button type="button" class="btn-pwd-peek" (click)="securityForm.showConfirm = !securityForm.showConfirm">
+                    {{ securityForm.showConfirm ? '👁️' : '👁️‍🗨️' }}
+                  </button>
+                </div>
+              </label>
+            </div>
+
+            <div class="settings-actions">
+              <button type="submit" class="btn-primary" [disabled]="isChangingPassword">
+                {{ isChangingPassword ? 'Updating...' : '🔒 Update Password' }}
+              </button>
+            </div>
+          </form>
+
+          <div class="danger-zone-box">
+            <div class="danger-zone-info">
+              <h4>Session Management</h4>
+              <p>Log out of this browser session. You will be redirected to the vendor login screen.</p>
+            </div>
+            <button class="btn-danger-outline" (click)="logout()">🚪 End Active Session (Logout)</button>
+          </div>
+        </div>
+
+        <!-- E. SHOP PREFERENCES -->
+        <div class="settings-panel" *ngIf="settingsTab === 'preferences'">
+          <div class="settings-panel-head">
+            <h3>Storefront & Workspace Preferences</h3>
+            <p>Customize the default active shopfront context loaded when you sign into Seller Studio.</p>
+          </div>
+
+          <form class="settings-form" (ngSubmit)="saveShopPreferences()">
+            <label class="form-group">
+              <span class="label-text">Default Storefront Context on Startup</span>
+              <select [(ngModel)]="shopPreferences.defaultShopId" name="defaultShopId">
+                <option [ngValue]="null">🌐 All Storefronts (Aggregated Overview)</option>
+                <option *ngFor="let s of shops" [ngValue]="s.id">🏪 {{ s.shopName }} ({{ s.category }})</option>
+              </select>
+            </label>
+
+            <div class="notification-switch-item" style="border: none; padding-left: 0; padding-right: 0;">
+              <div class="switch-info">
+                <strong>Automatically Switch to Newly Created Shop</strong>
+                <span>When opening a new shopfront, immediately activate its context in the topbar.</span>
+              </div>
+              <label class="switch-toggle">
+                <input type="checkbox" [(ngModel)]="shopPreferences.autoSwitchToNewShop" name="autoSwitchToNewShop" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="settings-actions">
+              <button type="submit" class="btn-primary">💾 Save Preferences</button>
+            </div>
+          </form>
         </div>
       </section>
 
@@ -606,13 +1459,40 @@
   <div class="modal-backdrop" *ngIf="showProductModal" (click)="closeProductModal()">
     <div class="modal" (click)="$event.stopPropagation()">
       <h3>{{ editingProductId !== null ? 'Edit Product' : 'Add Product' }}</h3>
-      <label>Product Name<input type="text" [(ngModel)]="productForm.name"></label>
+
+      <!-- Assign to Shopfront -->
+      <label *ngIf="shops.length > 0">Assign to Storefront / Shop
+        <select [(ngModel)]="productForm.shopId">
+          <option *ngFor="let s of shops" [value]="s.id">{{ s.shopName }} ({{ s.category }})</option>
+        </select>
+      </label>
+
+      <label>Product Name<input type="text" placeholder="e.g. Premium Noise Cancelling Headphones" [(ngModel)]="productForm.name"></label>
       <label>Category
         <select [(ngModel)]="productForm.category">
           <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
         </select>
       </label>
-      <label>Description<textarea rows="2" [(ngModel)]="productForm.description"></textarea></label>
+      <label>Description<textarea rows="2" placeholder="Product details, specifications, etc." [(ngModel)]="productForm.description"></textarea></label>
+
+      <!-- Product Image Upload -->
+      <label>Product Image
+        <div class="image-upload-box" style="margin-top: 6px; border: 2px dashed #cbd5e1; border-radius: 8px; padding: 12px; text-align: center; background: #f8fafc;">
+          <div *ngIf="imagePreviewUrl" style="position: relative; display: inline-block; margin-bottom: 8px;">
+            <img [src]="imagePreviewUrl" alt="Product Preview" style="max-height: 120px; max-width: 100%; border-radius: 6px; object-fit: contain; box-shadow: 0 2px 6px rgba(0,0,0,0.1);" />
+            <button type="button" (click)="removeSelectedImage()" style="position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;" title="Remove image">✕</button>
+          </div>
+          <div *ngIf="!imagePreviewUrl" style="margin-bottom: 8px; color: #64748b; font-size: 13px;">
+            <span style="font-size: 28px; display: block; margin-bottom: 4px;">🖼️</span>
+            <span>Upload product image (JPG, PNG, WEBP max 5MB)</span>
+          </div>
+          <input type="file" #fileInput (change)="onImageFileSelected($event)" accept="image/jpeg,image/png,image/webp" style="display: none;" />
+          <button type="button" class="btn-ghost" (click)="fileInput.click()" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 13px; cursor: pointer;">
+            📁 {{ imagePreviewUrl ? 'Change Image' : 'Choose File from Computer' }}
+          </button>
+        </div>
+      </label>
+
       <div class="modal-row">
         <label>Price (₹)<input type="number" [(ngModel)]="productForm.price"></label>
         <label>Discount (%)<input type="number" [(ngModel)]="productForm.discount"></label>
@@ -626,8 +1506,11 @@
         </label>
       </div>
       <div class="modal-actions">
-        <button class="btn-ghost" (click)="closeProductModal()">Cancel</button>
-        <button class="btn-primary" (click)="saveProduct()">Save Product</button>
+        <button class="btn-ghost" (click)="closeProductModal()" [disabled]="isSubmittingProduct">Cancel</button>
+        <button class="btn-primary" [disabled]="isSubmittingProduct" (click)="saveProduct()">
+          <span *ngIf="isSubmittingProduct">Saving...</span>
+          <span *ngIf="!isSubmittingProduct">{{ editingProductId !== null ? 'Update Product' : 'Save Product' }}</span>
+        </button>
       </div>
     </div>
   </div>
@@ -664,36 +1547,236 @@
       </div>
 
       <div class="modal-actions">
-        <button class="btn-ghost" (click)="closeShopModal()">Cancel</button>
-        <button class="btn-primary" (click)="saveShop()">{{ editingShopId !== null ? 'Save Changes' : 'Create Shop' }}</button>
+        <button class="btn-ghost" (click)="closeShopModal()" [disabled]="isSubmittingShop">Cancel</button>
+        <button class="btn-primary" [disabled]="isSubmittingShop" (click)="saveShop()">
+          <span *ngIf="isSubmittingShop">Saving...</span>
+          <span *ngIf="!isSubmittingShop">{{ editingShopId !== null ? 'Save Changes' : 'Create Shop' }}</span>
+        </button>
       </div>
     </div>
   </div>
 
+  <!-- ===================== CUSTOMER DETAIL MODAL ===================== -->
+  <div class="modal-backdrop" *ngIf="showCustomerDetailModal" (click)="closeCustomerDetailModal()">
+    <div class="modal wide" (click)="$event.stopPropagation()">
+      <div class="modal-header-row">
+        <div>
+          <h3>👤 Customer Purchase Profile</h3>
+          <p class="modal-subtitle">Verified order and item history for this customer.</p>
+        </div>
+        <button type="button" class="btn-ghost small" (click)="closeCustomerDetailModal()">✕</button>
+      </div>
 
+      <div *ngIf="isLoadingCustomerDetail" class="loading-state-card">
+        <p>Loading customer order records...</p>
+      </div>
+
+      <div *ngIf="!isLoadingCustomerDetail && selectedCustomerDetail">
+        <!-- Customer Info Summary Card -->
+        <div class="customer-profile-card">
+          <div class="profile-avatar-circle">
+            {{ selectedCustomerDetail.customerName ? selectedCustomerDetail.customerName.charAt(0).toUpperCase() : 'C' }}
+          </div>
+          <div class="profile-info-grid">
+            <div>
+              <span class="info-label">Customer Name</span>
+              <div class="info-val"><strong>{{ selectedCustomerDetail.customerName }}</strong></div>
+            </div>
+            <div>
+              <span class="info-label">Email Address</span>
+              <div class="info-val">{{ selectedCustomerDetail.customerEmail }}</div>
+            </div>
+            <div>
+              <span class="info-label">Phone Number</span>
+              <div class="info-val">{{ selectedCustomerDetail.customerPhone || 'N/A' }}</div>
+            </div>
+            <div>
+              <span class="info-label">Shipping Address</span>
+              <div class="info-val address-text">{{ selectedCustomerDetail.shippingAddress }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metric Badges Row -->
+        <div class="profile-stats-row">
+          <div class="mini-stat">
+            <span class="mini-label">Total Orders</span>
+            <span class="mini-val">{{ selectedCustomerDetail.totalOrders }}</span>
+          </div>
+          <div class="mini-stat">
+            <span class="mini-label">Total Spent</span>
+            <span class="mini-val price-val">₹{{ selectedCustomerDetail.totalSpent | number:'1.2-2' }}</span>
+          </div>
+          <div class="mini-stat">
+            <span class="mini-label">Last Purchase</span>
+            <span class="mini-val">{{ selectedCustomerDetail.lastPurchaseDate ? selectedCustomerDetail.lastPurchaseDate.substring(0, 10) : 'Recent' }}</span>
+          </div>
+          <div class="mini-stat">
+            <span class="mini-label">Buyer Relationship</span>
+            <span class="badge" [ngClass]="selectedCustomerDetail.customerStatus === 'Repeat Buyer' ? 'badge-repeat' : 'badge-new'">
+              {{ selectedCustomerDetail.customerStatus }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Orders History -->
+        <h4 style="margin: 18px 0 10px 0; font-size: 15px; font-weight: 700;">🛍️ Order History ({{ selectedCustomerDetail.orders.length }})</h4>
+        <div class="customer-orders-list">
+          <div class="order-detail-card" *ngFor="let ord of selectedCustomerDetail.orders">
+            <div class="order-card-header">
+              <div>
+                <strong>Order #{{ ord.orderNumber }}</strong>
+                <span class="date-text" style="margin-left: 8px;">{{ ord.orderDate ? ord.orderDate.substring(0, 10) : '' }}</span>
+              </div>
+              <div class="order-badges">
+                <span class="badge badge-paid">Payment: {{ ord.paymentStatus }}</span>
+                <span class="badge badge-status">{{ ord.orderStatus }}</span>
+                <span class="order-subtotal-val">Shop Total: <strong>₹{{ ord.vendorShopSubtotal | number:'1.2-2' }}</strong></span>
+              </div>
+            </div>
+
+            <div class="table-wrap" style="margin-top: 8px;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Category</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                    <th>Subtotal</th>
+                    <th>Item Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let it of ord.items">
+                    <td>
+                      <div class="order-item-cell">
+                        <img *ngIf="it.productImage" [src]="it.productImage" alt="{{ it.productName }}" class="item-thumb" />
+                        <span *ngIf="!it.productImage" class="item-emoji-thumb">📦</span>
+                        <span>{{ it.productName }}</span>
+                      </div>
+                    </td>
+                    <td>{{ it.category }}</td>
+                    <td>{{ it.quantity }}</td>
+                    <td>₹{{ it.price }}</td>
+                    <td><strong>₹{{ it.subtotal | number:'1.2-2' }}</strong></td>
+                    <td><span class="badge badge-status">{{ it.itemStatus }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 20px;">
+        <button type="button" class="btn-primary" (click)="closeCustomerDetailModal()">Close Profile</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== ENHANCED COUPON MODAL ===================== -->
   <div class="modal-backdrop" *ngIf="showCouponModal" (click)="closeCouponModal()">
-    <div class="modal" (click)="$event.stopPropagation()">
-      <h3>{{ editingCouponId !== null ? 'Edit Coupon' : 'Add Coupon' }}</h3>
-      <label>Coupon Code<input type="text" [(ngModel)]="couponForm.code"></label>
-      <div class="modal-row">
-        <label>Discount (%)<input type="number" [(ngModel)]="couponForm.discount"></label>
-        <label>Minimum Order (₹)<input type="number" [(ngModel)]="couponForm.minOrder"></label>
+    <div class="modal wide" (click)="$event.stopPropagation()">
+      <div class="modal-header-row">
+        <div>
+          <h3>{{ editingCouponId !== null ? 'Edit Promotional Coupon' : 'Create New Promotional Coupon' }}</h3>
+          <p class="modal-subtitle">Configure discount rules, validation conditions, and eligible products.</p>
+        </div>
+        <button type="button" class="btn-ghost small" (click)="closeCouponModal()">✕</button>
       </div>
-      <div class="modal-row">
-        <label>Start Date<input type="date" [(ngModel)]="couponForm.startDate"></label>
-        <label>Expiry Date<input type="date" [(ngModel)]="couponForm.expiryDate"></label>
+
+      <div class="modal-grid-fields">
+        <label>Coupon Code (Uppercase) *
+          <input type="text" placeholder="e.g. FESTIVE25" [(ngModel)]="couponForm.code" style="text-transform: uppercase; font-weight: 700;">
+        </label>
+
+        <label>Target Storefront *
+          <select [(ngModel)]="couponForm.shopId">
+            <option *ngFor="let s of shops" [value]="s.id">{{ s.shopName }} ({{ s.category }})</option>
+          </select>
+        </label>
       </div>
-      <div class="modal-actions">
-        <button class="btn-ghost" (click)="closeCouponModal()">Cancel</button>
-        <button class="btn-primary" (click)="saveCoupon()">Save Coupon</button>
+
+      <label>Promotion Title
+        <input type="text" placeholder="e.g. Mega Summer Discount" [(ngModel)]="couponForm.title">
+      </label>
+
+      <label>Promotion Description
+        <textarea rows="2" placeholder="Explain the discount terms to buyers..." [(ngModel)]="couponForm.description"></textarea>
+      </label>
+
+      <div class="modal-row">
+        <label>Discount Type *
+          <select [(ngModel)]="couponForm.discountType">
+            <option value="PERCENTAGE">Percentage Discount (%)</option>
+            <option value="FIXED_AMOUNT">Fixed Amount Discount (₹)</option>
+          </select>
+        </label>
+        <label>Discount Value *
+          <input type="number" [(ngModel)]="couponForm.discountValue" placeholder="{{ couponForm.discountType === 'PERCENTAGE' ? 'e.g. 20' : 'e.g. 150' }}">
+        </label>
+      </div>
+
+      <div class="modal-row">
+        <label>Minimum Order Amount (₹)
+          <input type="number" [(ngModel)]="couponForm.minOrderAmount" placeholder="e.g. 500">
+        </label>
+        <label *ngIf="couponForm.discountType === 'PERCENTAGE'">Maximum Discount Cap (₹)
+          <input type="number" [(ngModel)]="couponForm.maxDiscountAmount" placeholder="e.g. 250">
+        </label>
+      </div>
+
+      <div class="modal-row">
+        <label>Start Date
+          <input type="date" [(ngModel)]="couponForm.startDate">
+        </label>
+        <label>Expiry Date
+          <input type="date" [(ngModel)]="couponForm.expiryDate">
+        </label>
+      </div>
+
+      <div class="modal-row">
+        <label>Global Maximum Usage Limit
+          <input type="number" [(ngModel)]="couponForm.maxUsageLimit" placeholder="e.g. 100 (Blank = Unlimited)">
+        </label>
+        <label>Per-Customer Usage Limit
+          <input type="number" [(ngModel)]="couponForm.perCustomerUsageLimit" placeholder="e.g. 1">
+        </label>
+      </div>
+
+      <!-- Applicable Products -->
+      <label>Applicable Products Scope
+        <select [(ngModel)]="couponForm.applicableProductsType">
+          <option value="ALL">All Products in Selected Store</option>
+          <option value="SPECIFIC">Specific Selected Products Only</option>
+        </select>
+      </label>
+
+      <!-- Specific Products Checkboxes -->
+      <div *ngIf="couponForm.applicableProductsType === 'SPECIFIC'" class="product-selection-box">
+        <span class="selection-box-label">Select Eligible Products:</span>
+        <div class="product-checkbox-grid">
+          <label *ngFor="let p of products" class="product-checkbox-item">
+            <input type="checkbox" [checked]="selectedCouponProducts.includes(p.id)" (change)="toggleProductForCoupon(p.id)">
+            <span>{{ p.name }} (₹{{ p.price }})</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 20px;">
+        <button type="button" class="btn-ghost" (click)="closeCouponModal()">Cancel</button>
+        <button type="button" class="btn-primary" (click)="saveCoupon()">
+          {{ editingCouponId !== null ? 'Save Changes' : 'Create & Activate Coupon' }}
+        </button>
       </div>
     </div>
   </div>
 
-
+  <!-- ===================== CONFIRM DELETE MODAL ===================== -->
   <div class="modal-backdrop" *ngIf="confirmTarget" (click)="cancelDelete()">
     <div class="modal small" (click)="$event.stopPropagation()">
-      <h3>Delete {{ confirmTarget?.name }}?</h3>
+      <h3>Delete {{ confirmTarget.name }}?</h3>
       <p>This action cannot be undone.</p>
       <div class="modal-actions">
         <button class="btn-ghost" (click)="cancelDelete()">Cancel</button>

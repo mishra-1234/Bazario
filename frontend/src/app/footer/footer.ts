@@ -114,20 +114,22 @@ export class Footer implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {}
 
   ngAfterViewInit(): void {
-    this.observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('in-view');
-            this.observer?.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' },
-    );
+    if (typeof IntersectionObserver !== 'undefined') {
+      this.observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('in-view');
+              this.observer?.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.12, rootMargin: '0px 0px -40px 0px' },
+      );
 
-    const revealEls = this.host.nativeElement.querySelectorAll('[reveal]');
-    revealEls.forEach((el) => this.observer?.observe(el));
+      const revealEls = this.host.nativeElement.querySelectorAll('[reveal]');
+      revealEls.forEach((el) => this.observer?.observe(el));
+    }
   }
 
   ngOnDestroy(): void {

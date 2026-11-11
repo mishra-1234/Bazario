@@ -1,93 +1,384 @@
-<div class="topbar">Welcome to Bazario, your multi-vendor marketplace</div>
+<div class="topbar">
+  <div class="topbar-inner">
+    <span>🎉 Free Express Shipping on orders above ₹499</span>
+    <span class="sep">|</span>
+    <span>🛡️ 100% Verified Sellers &amp; Quality Guarantee</span>
+    <span class="sep">|</span>
+    <span>📞 24/7 Dedicated Customer Care</span>
+  </div>
+</div>
 
 <header class="head">
   <button class="logo" (click)="go('home')">
-    <span class="logo-mark">b</span><span>bazario<small>every vendor, one place</small></span>
+    <span class="logo-mark">b</span>
+    <div class="logo-text">
+      <span class="brand-name">bazario</span>
+      <small>every vendor, one place</small>
+    </div>
   </button>
 
   <form class="search" (submit)="$event.preventDefault(); search()">
-    <input name="q" [(ngModel)]="query" placeholder="Search tools, plants, furniture…" aria-label="Search products" />
-    <button type="submit" class="btn-search">Search</button>
+    <div class="search-category-pill">
+      <span>{{ category() === 'All' ? 'All Items' : category() }}</span>
+    </div>
+    <input name="q" [(ngModel)]="query" placeholder="Search 1,000+ products, trusted local shops, categories…" aria-label="Search products" />
+    <button type="submit" class="btn-search">
+      <span>🔍</span> <span class="search-txt">Search</span>
+    </button>
   </form>
 
   <div class="actions">
-    <button class="icon-btn" (click)="go('wishlist')">♡ Wishlist <b class="badge" [class.pop]="wishlist().length">{{ wishlist().length }}</b></button>
-    <button class="icon-btn" (click)="openCart()">🛒 Cart <b class="badge" [class.pop]="cartCount()">{{ cartCount() }}</b></button>
+    <button class="icon-btn" (click)="go('wishlist')" title="View Wishlist">
+      <span class="btn-icon">♡</span>
+      <span class="btn-lbl">Wishlist</span>
+      <b class="badge" [class.pop]="wishlist().length">{{ wishlist().length }}</b>
+    </button>
+
+    <button class="icon-btn cart-btn" (click)="openCart()" title="View Cart">
+      <span class="btn-icon">🛒</span>
+      <span class="btn-lbl">Cart</span>
+      <b class="badge" [class.pop]="cartCount()">{{ cartCount() }}</b>
+    </button>
+
     <div class="account">
-      <button class="icon-btn" (click)="accountOpen.set(!accountOpen())" [attr.aria-expanded]="accountOpen()">
-        👤 Account @if (unread()) { <i class="dot"></i> }
+      <button class="icon-btn account-trigger" (click)="accountOpen.set(!accountOpen())" [attr.aria-expanded]="accountOpen()">
+        <span class="avatar-sm">{{ profile.name.charAt(0).toUpperCase() }}</span>
+        <span class="btn-lbl user-name">{{ profile.name.split(' ')[0] }}</span>
+        <span class="caret">▾</span>
+        @if (unread()) { <i class="dot"></i> }
       </button>
+
       <nav class="menu" [class.open]="accountOpen()">
-        <button (click)="go('profile')">My Profile</button>
-        <button (click)="go('editProfile')">Edit Profile</button>
-        <button (click)="go('addresses')">My Addresses</button>
-        <button (click)="go('orders')">My Orders</button>
-        <button (click)="go('notifications')">Notifications @if (unread()) { <b class="badge sm">{{ unread() }}</b> }</button>
-        <button (click)="go('password')">Change Password</button>
-        <button class="danger" (click)="logout()">Logout</button>
+        <div class="menu-user-head">
+          <div class="user-avatar-circle">{{ profile.name.charAt(0).toUpperCase() }}</div>
+          <div>
+            <b>{{ profile.name }}</b>
+            <small>{{ profile.email }}</small>
+          </div>
+        </div>
+        <hr class="menu-divider" />
+        <button (click)="go('orders')">📦 My Orders @if (orders().length) { <b class="badge sm">{{ orders().length }}</b> }</button>
+        <button (click)="go('wishlist')">♡ My Wishlist @if (wishlist().length) { <b class="badge sm">{{ wishlist().length }}</b> }</button>
+        <button (click)="go('profile')">👤 Profile Details</button>
+        <button (click)="go('addresses')">📍 Delivery Addresses</button>
+        <button (click)="go('notifications')">🔔 Notifications @if (unread()) { <b class="badge sm">{{ unread() }}</b> }</button>
+        <button (click)="go('password')">🔒 Change Password</button>
+        <hr class="menu-divider" />
+        <button class="danger" (click)="logout()">🚪 Sign Out</button>
       </nav>
     </div>
   </div>
 </header>
 
 <nav class="nav">
-  <button [class.on]="view() === 'home'" (click)="go('home')">Home</button>
-  <button [class.on]="view() === 'products'" (click)="resetFilters(); go('products')">Products</button>
-  <button [class.on]="view() === 'categories'" (click)="go('categories')">Categories</button>
-  <button [class.on]="view() === 'orders'" (click)="go('orders')">My Orders</button>
+  <div class="nav-links">
+    <button [class.on]="view() === 'home'" (click)="go('home')">🏠 Home</button>
+    <button [class.on]="view() === 'products'" (click)="resetFilters(); go('products')">🛍️ All Products</button>
+    <button [class.on]="view() === 'categories'" (click)="go('categories')">📑 Categories</button>
+    <button [class.on]="view() === 'orders'" (click)="go('orders')">
+      📦 My Orders @if (orders().length) { <span class="order-count-badge">{{ orders().length }}</span> }
+    </button>
+    <button [class.on]="selectedShopFilter() !== 'All' && view() === 'products'" (click)="selectedShopFilter.set('All'); go('products')">
+      🏪 Verified Shops
+    </button>
+  </div>
+  <div class="nav-deals-highlight">
+    <span class="deal-pulse">⚡ Special Promo</span>
+    <button class="deal-pill-btn" (click)="openCart(); couponCodeInput = 'BAZARIO20'">Use Code: BAZARIO20</button>
+  </div>
 </nav>
 
-<main class="page" [class.locked]="detail() || cartOpen() || tracking()">
+<main class="page" [class.locked]="detail() || cartOpen() || tracking() || showReviewModal()">
   @switch (view()) {
 
+    <!-- ============================================== -->
+    <!-- PART 1: HOMEPAGE REDESIGN                      -->
+    <!-- ============================================== -->
     @case ('home') {
-      <section class="view">
-        <div class="hero">
-          <div class="hero-main">
-            <h1>Where great gardens begin</h1>
-            <p>Compare prices from trusted local vendors and get everything delivered to your door.</p>
-            <button class="btn-yellow" (click)="go('products')">Shop now</button>
-            <span class="float f1">🪴</span><span class="float f2">🚿</span><span class="float f3">🔧</span>
+      <section class="view home-view">
+
+        <!-- 1. Personalized Dynamic Welcome Header -->
+        <div class="welcome-banner">
+          <div class="welcome-content">
+            <div class="welcome-badge">
+              <span>Verified Marketplace</span>
+            </div>
+            <h2>
+              Welcome back, {{ profile.name }}! 👋
+            </h2>
+            <p>Discover handpicked authentic products from verified regional vendors across India with same-day order processing.</p>
           </div>
-          <div class="hero-tiles">
-            <button class="tile t1" (click)="pickCategory('Drills')">Toughness without limits</button>
-            <button class="tile t2" (click)="pickCategory('Drills')">Powerful brushless motor</button>
-            <button class="tile t3" (click)="pickCategory('Home & Garden')">Backpack blower</button>
-            <button class="tile t4" (click)="pickCategory('Furniture')">Designing &amp; crafting</button>
+          <div class="welcome-stats">
+            <div class="w-stat">
+              <span class="stat-ico">🏪</span>
+              <div>
+                <b>{{ featuredVendors().length || 4 }}+</b>
+                <small>Local Stores</small>
+              </div>
+            </div>
+            <div class="w-stat">
+              <span class="stat-ico">📦</span>
+              <div>
+                <b>{{ products().length || 20 }}+</b>
+                <small>Active Products</small>
+              </div>
+            </div>
+            <div class="w-stat">
+              <span class="stat-ico">⚡</span>
+              <div>
+                <b>100%</b>
+                <small>Buyer Guarantee</small>
+              </div>
+            </div>
           </div>
         </div>
 
-        <h2 class="sec">Explore popular categories
-          <button class="link" (click)="go('categories')">See all →</button></h2>
-        <div class="cat-row">
+        <!-- 2. Hero Carousel / Photography Showcase -->
+        <div class="hero">
+          <div class="hero-main">
+            <div class="hero-overlay"></div>
+            <div class="hero-text">
+              <span class="hero-kicker">✨ FESTIVE SAVINGS UP TO 40% OFF</span>
+              <h1>Authentic Crafts, Tech &amp; Essentials</h1>
+              <p>Support verified local artisans and top regional businesses with door-to-door fast delivery.</p>
+              <div class="hero-actions">
+                <button class="btn-yellow hero-btn" (click)="go('products')">Shop Best Sellers →</button>
+                <button class="btn-outline-white hero-btn" (click)="go('categories')">Explore Categories</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero-tiles">
+            <div class="tile tile-electronics" (click)="pickCategory('Electronics')">
+              <div class="tile-overlay"></div>
+              <div class="tile-content">
+                <span class="tile-tag">High-Tech</span>
+                <h3>Audio &amp; Smart Tech</h3>
+                <span class="tile-link">Explore Now →</span>
+              </div>
+            </div>
+
+            <div class="tile tile-organic" (click)="pickCategory('Grocery & Organic')">
+              <div class="tile-overlay"></div>
+              <div class="tile-content">
+                <span class="tile-tag">100% Fresh</span>
+                <h3>Organic Farm Produce</h3>
+                <span class="tile-link">Order Fresh →</span>
+              </div>
+            </div>
+
+            <div class="tile tile-furniture" (click)="pickCategory('Furniture')">
+              <div class="tile-overlay"></div>
+              <div class="tile-content">
+                <span class="tile-tag">Handcrafted</span>
+                <h3>Solid Wood Furniture</h3>
+                <span class="tile-link">View Designs →</span>
+              </div>
+            </div>
+
+            <div class="tile tile-gardening" (click)="pickCategory('Home & Garden')">
+              <div class="tile-overlay"></div>
+              <div class="tile-content">
+                <span class="tile-tag">Eco Living</span>
+                <h3>Indoor Plants &amp; Decor</h3>
+                <span class="tile-link">Green Living →</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Shop by Categories -->
+        <div class="section-head">
+          <div>
+            <h2 class="sec-title">Shop by Categories</h2>
+            <p class="sec-subtitle">Browse authentic curated collections from verified vendors</p>
+          </div>
+          <button class="link-btn" (click)="go('categories')">View All ({{ categories.length }}) →</button>
+        </div>
+
+        <div class="cat-carousel">
           @for (c of categories; track c.name) {
-            <button class="cat" (click)="pickCategory(c.name)"><span>{{ c.icon }}</span>{{ c.name }}</button>
+            <button class="cat-card" (click)="pickCategory(c.name)">
+              <div class="cat-card-thumb">
+                <img [src]="c.image" [alt]="c.name" loading="lazy" />
+                <span class="cat-card-ico">{{ c.icon }}</span>
+              </div>
+              <b class="cat-card-name">{{ c.name }}</b>
+              <small class="cat-card-desc">{{ c.description }}</small>
+            </button>
           }
         </div>
 
-        <div class="deal-banner">
-          <div><h3>Up to 60% off clearance</h3><p>Fall for a great deal from vendors near you.</p></div>
-          <button class="btn-yellow" (click)="setSort('low'); go('products')">Shop clearance</button>
+        <!-- 4. Promotional Coupons Banner -->
+        <div class="coupon-banner-section">
+          <div class="coupon-banner-header">
+            <div class="cp-title-wrap">
+              <span class="cp-badge">EXCLUSIVE SAVINGS</span>
+              <h3>Active Coupons &amp; Instant Offers</h3>
+            </div>
+            <p>Apply these discount codes at checkout to unlock guaranteed savings!</p>
+          </div>
+          <div class="coupon-cards-grid">
+            @for (cp of activeCoupons(); track cp.code) {
+              <div class="coupon-item-card">
+                <div class="cp-left">
+                  <div class="cp-code-badge">{{ cp.code }}</div>
+                  <div class="cp-info">
+                    <b>{{ cp.discountType === 'PERCENTAGE' ? cp.discountValue + '% OFF' : '₹' + cp.discountValue + ' OFF' }}</b>
+                    <small>{{ cp.description || 'Valid on all marketplace orders' }}</small>
+                  </div>
+                </div>
+                <button class="btn-copy-code" (click)="copyAndApplyCoupon(cp.code)">
+                  Apply Code ↵
+                </button>
+              </div>
+            }
+          </div>
         </div>
 
-        <h2 class="sec pill">Trending combo &amp; deals <button class="link" (click)="go('products')">See all →</button></h2>
-        <div class="grid">
-          @for (p of products().slice(0, 4); track p.id) { <ng-container *ngTemplateOutlet="card; context: { $implicit: p }" /> }
+        <!-- 5. Featured Products Grid -->
+        <div class="section-head">
+          <div>
+            <span class="pill-badge">TOP RATED</span>
+            <h2 class="sec-title">Featured Products</h2>
+            <p class="sec-subtitle">Highly rated items recommended by thousands of happy shoppers</p>
+          </div>
+          <button class="link-btn" (click)="setSort('rating'); go('products')">See All Featured →</button>
         </div>
+
+        <div class="grid">
+          @for (p of featuredProducts(); track p.id) {
+            <ng-container *ngTemplateOutlet="card; context: { $implicit: p }" />
+          }
+        </div>
+
+        <!-- 6. Featured Vendors / Storefronts -->
+        <div class="section-head mt-lg">
+          <div>
+            <span class="pill-badge vendor-badge">VERIFIED SELLERS</span>
+            <h2 class="sec-title">Top Vendor Stores</h2>
+            <p class="sec-subtitle">Connect directly with trusted regional shops, nurseries, and craftsmen</p>
+          </div>
+          <button class="link-btn" (click)="go('products')">Browse All Stores →</button>
+        </div>
+
+        <div class="vendor-cards-grid">
+          @for (shop of featuredVendors(); track shop.id) {
+            <div class="vendor-store-card">
+              <div class="store-card-header">
+                <div class="store-avatar">{{ shop.logo || '🏪' }}</div>
+                <div class="store-title-wrap">
+                  <div class="store-verified-row">
+                    <b>{{ shop.shopName }}</b>
+                    <span class="verified-pill" title="Verified Bazario Partner">✓ Verified</span>
+                  </div>
+                  <small class="store-cat">{{ shop.category || 'General Store' }}</small>
+                </div>
+              </div>
+
+              <div class="store-details-list">
+                @if (shop.ownerName) { <span>👤 <strong>Owner:</strong> {{ shop.ownerName }}</span> }
+                @if (shop.address) { <span>📍 {{ shop.address }}</span> }
+              </div>
+
+              <button class="btn-store-visit" (click)="filterByShop(shop.shopName)">
+                View Store Products →
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- 7. Best Sellers & Trending Deals -->
+        <div class="section-head mt-lg">
+          <div>
+            <span class="pill-badge deal-pill">HOT PICKS</span>
+            <h2 class="sec-title">Trending Deals &amp; Discounts</h2>
+            <p class="sec-subtitle">Limited-time bargains with high customer demand</p>
+          </div>
+          <button class="link-btn" (click)="setSort('low'); go('products')">View All Deals →</button>
+        </div>
+
+        <div class="grid">
+          @for (p of trendingDeals(); track p.id) {
+            <ng-container *ngTemplateOutlet="card; context: { $implicit: p }" />
+          }
+        </div>
+
+        <!-- 8. Recently Viewed Section (if available) -->
+        @if (recentlyViewed().length > 0) {
+          <div class="section-head mt-lg">
+            <div>
+              <h2 class="sec-title">Recently Viewed</h2>
+              <p class="sec-subtitle">Pick up right where you left off</p>
+            </div>
+          </div>
+          <div class="grid">
+            @for (p of recentlyViewed(); track p.id) {
+              <ng-container *ngTemplateOutlet="card; context: { $implicit: p }" />
+            }
+          </div>
+        }
+
+        <!-- 9. Bazario Trust & Perks Banner -->
+        <div class="perks-banner">
+          <div class="perk-box">
+            <span class="perk-ico">🚚</span>
+            <div>
+              <b>Free Express Delivery</b>
+              <small>On all orders above ₹499</small>
+            </div>
+          </div>
+          <div class="perk-box">
+            <span class="perk-ico">🛡️</span>
+            <div>
+              <b>100% Genuine Guarantee</b>
+              <small>Verified authentic products</small>
+            </div>
+          </div>
+          <div class="perk-box">
+            <span class="perk-ico">🔄</span>
+            <div>
+              <b>7-Day Easy Returns</b>
+              <small>Hassle-free replacement policy</small>
+            </div>
+          </div>
+          <div class="perk-box">
+            <span class="perk-ico">🔒</span>
+            <div>
+              <b>Secure Payments</b>
+              <small>UPI, Cards, NetBanking, COD</small>
+            </div>
+          </div>
+        </div>
+
       </section>
     }
 
+    <!-- ============================================== -->
+    <!-- PRODUCTS CATALOG VIEW                          -->
+    <!-- ============================================== -->
     @case ('products') {
       <section class="view">
-        <h2 class="sec">Products <span class="count">{{ visible().length }} found</span></h2>
+        <div class="catalog-header">
+          <div>
+            <h2 class="sec-title">Explore Catalog</h2>
+            <span class="count">{{ visible().length }} products found</span>
+            @if (selectedShopFilter() !== 'All') {
+              <span class="active-filter-tag">
+                🏪 Store: <strong>{{ selectedShopFilter() }}</strong>
+                <button (click)="selectedShopFilter.set('All')">✕</button>
+              </span>
+            }
+          </div>
 
-        <div class="toolbar">
-          <button class="chip" [class.on]="showFilter()" (click)="toggleFilter()">⚙ Filter</button>
-          <span class="sortlabel">Sort</span>
-          <button class="chip" [class.on]="sort() === 'featured'" (click)="setSort('featured')">Featured</button>
-          <button class="chip" [class.on]="sort() === 'low'" (click)="setSort('low')">Price: low to high</button>
-          <button class="chip" [class.on]="sort() === 'high'" (click)="setSort('high')">Price: high to low</button>
-          <button class="chip" [class.on]="sort() === 'rating'" (click)="setSort('rating')">Top rated</button>
+          <div class="toolbar">
+            <button class="chip" [class.on]="showFilter()" (click)="toggleFilter()">⚙ Filters</button>
+            <span class="sortlabel">Sort:</span>
+            <button class="chip" [class.on]="sort() === 'featured'" (click)="setSort('featured')">Featured</button>
+            <button class="chip" [class.on]="sort() === 'low'" (click)="setSort('low')">Price: Low to High</button>
+            <button class="chip" [class.on]="sort() === 'high'" (click)="setSort('high')">Price: High to Low</button>
+            <button class="chip" [class.on]="sort() === 'rating'" (click)="setSort('rating')">Top Rated</button>
+          </div>
         </div>
 
         <div class="filter" [class.open]="showFilter()">
@@ -98,10 +389,19 @@
                 @for (c of categories; track c.name) { <option>{{ c.name }}</option> }
               </select>
             </label>
-            <label>Max price: {{ money(maxPrice()) }}
-              <input type="range" min="20" max="5000" step="50" [value]="maxPrice()" (input)="maxPrice.set(+$any($event.target).value)" />
+
+            <label>Vendor Store
+              <select [ngModel]="selectedShopFilter()" (ngModelChange)="selectedShopFilter.set($event)">
+                <option value="All">All Vendor Stores</option>
+                @for (s of featuredVendors(); track s.id) { <option [value]="s.shopName">{{ s.shopName }}</option> }
+              </select>
             </label>
-            <button class="link" (click)="resetFilters()">Reset filters</button>
+
+            <label>Max Price: {{ money(maxPrice()) }}
+              <input type="range" min="100" max="50000" step="100" [value]="maxPrice()" (input)="maxPrice.set(+$any($event.target).value)" />
+            </label>
+
+            <button class="btn-line reset-btn" (click)="resetFilters()">Reset All Filters</button>
           </div>
         </div>
 
@@ -110,228 +410,612 @@
             @for (p of visible(); track p.id) { <ng-container *ngTemplateOutlet="card; context: { $implicit: p }" /> }
           </div>
         } @else {
-          <div class="empty">No products match. <button class="link" (click)="resetFilters()">Clear filters</button> to see everything.</div>
+          <div class="empty">
+            <span style="font-size: 40px; display: block; margin-bottom: 8px;">🔍</span>
+            <b>No products match your active search or filters.</b>
+            <p>Try clearing your category, store, or price range filters to view all products.</p>
+            <button class="btn-green mt-sm" (click)="resetFilters()">Clear Filters &amp; Show All</button>
+          </div>
         }
       </section>
     }
 
+    <!-- ============================================== -->
+    <!-- CATEGORIES VIEW                                -->
+    <!-- ============================================== -->
     @case ('categories') {
       <section class="view">
-        <h2 class="sec">Categories</h2>
+        <h2 class="sec-title">All Categories</h2>
+        <p class="sec-subtitle">Explore products classified by department</p>
         <div class="cat-grid">
           @for (c of categories; track c.name) {
-            <button class="cat big" (click)="pickCategory(c.name)"><span>{{ c.icon }}</span>{{ c.name }}</button>
+            <button class="cat-large-card" (click)="pickCategory(c.name)">
+              <div class="cat-img-wrap">
+                <img [src]="c.image" [alt]="c.name" loading="lazy" />
+                <span class="cat-symbol">{{ c.icon }}</span>
+              </div>
+              <div class="cat-text-wrap">
+                <h3>{{ c.name }}</h3>
+                <p>{{ c.description }}</p>
+                <span class="cat-arrow">Explore collection →</span>
+              </div>
+            </button>
           }
         </div>
       </section>
     }
 
+    <!-- ============================================== -->
+    <!-- WISHLIST VIEW                                  -->
+    <!-- ============================================== -->
     @case ('wishlist') {
       <section class="view">
-        <h2 class="sec">My wishlist</h2>
+        <div class="section-head">
+          <div>
+            <h2 class="sec-title">My Wishlist</h2>
+            <span class="count">{{ wished().length }} items saved</span>
+          </div>
+        </div>
         @if (wished().length) {
           <div class="grid">
             @for (p of wished(); track p.id) { <ng-container *ngTemplateOutlet="card; context: { $implicit: p }" /> }
           </div>
-        } @else { <div class="empty">Nothing saved yet. Tap ♡ on any product to keep it here.</div> }
-      </section>
-    }
-
-    @case ('orders') {
-      <section class="view">
-        <h2 class="sec">My orders</h2>
-        <div class="orders">
-          @for (o of orders(); track o.id) {
-            <article class="order">
-              <div class="o-ico">{{ o.icon }}</div>
-              <div class="o-info">
-                <b>{{ o.item }}</b>
-                <span>{{ o.id }} · {{ o.date }} · {{ money(o.total) }}</span>
-                <em class="status s-{{ o.status.split(' ')[0] }}">{{ o.status }}</em>
-              </div>
-              <div class="o-btns">
-                @if (o.status === 'Processing' || o.status === 'Shipped') { <button class="btn-line" (click)="trackOrder(o)">Track order</button> }
-                @if (o.status === 'Processing') { <button class="btn-line warn" (click)="cancelOrder(o)">Cancel order</button> }
-                @if (o.status === 'Delivered') { <button class="btn-line warn" (click)="requestRefund(o)">Request refund</button> }
-                <button class="btn-green sm" (click)="buyAgain(o)">Buy again</button>
-              </div>
-            </article>
-          } @empty { <div class="empty">No orders yet. Your first purchase will appear here.</div> }
-        </div>
-      </section>
-    }
-
-    @case ('profile') {
-      <section class="view panel">
-        <h2 class="sec">My profile</h2>
-        <div class="avatar">{{ profile.name[0] }}</div>
-        <dl><dt>Name</dt><dd>{{ profile.name }}</dd><dt>Email</dt><dd>{{ profile.email }}</dd><dt>Phone</dt><dd>{{ profile.phone }}</dd></dl>
-        <div class="row"><button class="btn-green" (click)="go('editProfile')">Edit profile</button>
-          <button class="btn-line" (click)="go('addresses')">My addresses</button>
-          <button class="btn-line" (click)="go('password')">Change password</button></div>
-      </section>
-    }
-
-    @case ('editProfile') {
-      <section class="view panel">
-        <h2 class="sec">Edit profile</h2>
-        <label>Name <input [(ngModel)]="profile.name" name="n" /></label>
-        <label>Email <input [(ngModel)]="profile.email" name="e" type="email" /></label>
-        <label>Phone <input [(ngModel)]="profile.phone" name="p" /></label>
-        <div class="row"><button class="btn-green" (click)="saveProfile()">Save changes</button><button class="btn-line" (click)="go('profile')">Cancel</button></div>
-      </section>
-    }
-
-    @case ('addresses') {
-      <section class="view panel">
-        <h2 class="sec">My addresses</h2>
-        @for (a of addresses; track a.label) { <div class="addr"><b>{{ a.label }}</b><span>{{ a.text }}</span></div> }
-      </section>
-    }
-
-    @case ('notifications') {
-      <section class="view panel">
-        <h2 class="sec">Notifications <button class="link" (click)="markRead()">Mark all as read</button></h2>
-        @for (n of notifications(); track n.text) {
-          <div class="note" [class.unread]="!n.read"><span>{{ n.text }}</span><small>{{ n.time }}</small></div>
+        } @else {
+          <div class="empty">
+            <span style="font-size: 40px; display: block; margin-bottom: 8px;">♡</span>
+            <b>Your Wishlist is Empty</b>
+            <p>Save items you like by tapping the heart icon on any product card.</p>
+            <button class="btn-yellow mt-sm" (click)="go('products')">Discover Products</button>
+          </div>
         }
       </section>
     }
 
+    <!-- ============================================== -->
+    <!-- PART 4 (CRITICAL): FIX MY ORDERS               -->
+    <!-- ============================================== -->
+    @case ('orders') {
+      <section class="view orders-view">
+        <div class="orders-head-block">
+          <div>
+            <h2 class="sec-title">My Orders</h2>
+            <p class="sec-subtitle">Track, review, or reorder items from your purchases</p>
+          </div>
+
+          <!-- Order Status Filtering Tabs -->
+          <div class="order-filter-tabs">
+            <button [class.active]="orderStatusFilter() === 'All'" (click)="orderStatusFilter.set('All')">
+              All ({{ orders().length }})
+            </button>
+            <button [class.active]="orderStatusFilter() === 'Processing'" (click)="orderStatusFilter.set('Processing')">
+              Processing
+            </button>
+            <button [class.active]="orderStatusFilter() === 'Shipped'" (click)="orderStatusFilter.set('Shipped')">
+              Shipped
+            </button>
+            <button [class.active]="orderStatusFilter() === 'Delivered'" (click)="orderStatusFilter.set('Delivered')">
+              Delivered
+            </button>
+            <button [class.active]="orderStatusFilter() === 'Cancelled'" (click)="orderStatusFilter.set('Cancelled')">
+              Cancelled
+            </button>
+          </div>
+        </div>
+
+        <!-- Orders Search Bar -->
+        <div class="order-search-bar">
+          <input type="text" [(ngModel)]="orderSearchQuery" placeholder="Search orders by Order Number (#BZ-...), Product Name, or Vendor Shop..." />
+          @if (orderSearchQuery()) {
+            <button class="clear-search-btn" (click)="orderSearchQuery.set('')">✕</button>
+          }
+        </div>
+
+        <!-- Complete Structured Order Cards List -->
+        <div class="orders-list">
+          @for (o of filteredOrders(); track o.id) {
+            <article class="order-card-detailed">
+
+              <!-- Order Header -->
+              <header class="order-card-header">
+                <div class="order-id-group">
+                  <span class="order-id-badge">Order #{{ o.orderNumber || o.id }}</span>
+                  <span class="order-date-text">Placed on {{ o.date }}</span>
+                </div>
+                <div class="order-status-group">
+                  <span class="order-status-pill s-{{ o.status }}">{{ o.status }}</span>
+                  <span class="order-total-sum">{{ money(o.totalAmount) }}</span>
+                </div>
+              </header>
+
+              <!-- Order Items Section -->
+              <div class="order-items-wrapper">
+                @for (item of o.items; track item.id) {
+                  <div class="order-item-row">
+                    <div class="item-img-box">
+                      <img [src]="item.productImage" [alt]="item.productName" (error)="onImgError($event, item.category, item.productName)" />
+                    </div>
+
+                    <div class="item-desc-box">
+                      <b class="item-title">{{ item.productName }}</b>
+                      <div class="item-shop-badge">
+                        <span>{{ item.vendorShopLogo || '🏪' }}</span>
+                        <span>Sold by: <strong>{{ item.vendorShopName || 'Verified Vendor' }}</strong></span>
+                      </div>
+                      <div class="item-qty-price">
+                        <span>Qty: <strong>{{ item.quantity }}</strong></span>
+                        <span class="dot-sep">·</span>
+                        <span>Unit: {{ money(item.price) }}</span>
+                        <span class="dot-sep">·</span>
+                        <span class="item-subtotal">Subtotal: <strong>{{ money(item.subtotal) }}</strong></span>
+                      </div>
+                    </div>
+
+                    <div class="item-actions-box">
+                      <span class="item-status-pill status-{{ item.status }}">{{ item.status }}</span>
+                      <button class="btn-reorder" (click)="buyAgain(item)">Buy Again</button>
+                      @if (o.status === 'Delivered') {
+                        <button class="btn-review-item" (click)="openReviewModal({ id: item.productId, name: item.productName, vendorShopId: item.vendorShopId })">
+                          ⭐ Write Review
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <!-- Order Financial & Shipping Details Footer -->
+              <footer class="order-card-footer">
+                <div class="order-shipping-info">
+                  <span>📍 <strong>Shipping Address:</strong> {{ o.shippingAddress }}</span>
+                  @if (o.couponCode && o.discountAmount) {
+                    <span class="applied-coupon-tag">🎟️ Coupon Applied: <strong>{{ o.couponCode }}</strong> (Discount: -{{ money(o.discountAmount) }})</span>
+                  }
+                </div>
+
+                <div class="order-actions-bar">
+                  @if (o.status === 'Processing' || o.status === 'Shipped') {
+                    <button class="btn-line" (click)="trackOrder(o)">📍 Track Order</button>
+                  }
+                  @if (o.status === 'Processing') {
+                    <button class="btn-line warn" (click)="cancelOrder(o)">✕ Cancel Order</button>
+                  }
+                  @if (o.status === 'Delivered') {
+                    <button class="btn-line" (click)="requestRefund(o)">🔄 Request Refund</button>
+                  }
+                </div>
+              </footer>
+
+            </article>
+          } @empty {
+            <div class="empty">
+              <span style="font-size: 44px; display: block; margin-bottom: 8px;">🛍️</span>
+              <b>No orders found matching your criteria.</b>
+              <p>Explore thousands of authentic products and place your first order!</p>
+              <button class="btn-yellow mt-sm" (click)="go('products')">Start Shopping Now</button>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- PROFILE VIEW -->
+    @case ('profile') {
+      <section class="view panel">
+        <h2 class="sec-title">Account Profile</h2>
+        <div class="avatar-large">{{ profile.name.charAt(0).toUpperCase() }}</div>
+        <dl>
+          <dt>Full Name</dt><dd>{{ profile.name }}</dd>
+          <dt>Email</dt><dd>{{ profile.email }}</dd>
+          <dt>Phone</dt><dd>{{ profile.phone }}</dd>
+        </dl>
+        <div class="row">
+          <button class="btn-green" (click)="go('editProfile')">Edit Profile</button>
+          <button class="btn-line" (click)="go('addresses')">Delivery Addresses</button>
+          <button class="btn-line" (click)="go('password')">Change Password</button>
+        </div>
+      </section>
+    }
+
+    <!-- EDIT PROFILE -->
+    @case ('editProfile') {
+      <section class="view panel">
+        <h2 class="sec-title">Edit Profile Information</h2>
+        <label>Full Name <input [(ngModel)]="profile.name" name="n" /></label>
+        <label>Email Address <input [(ngModel)]="profile.email" name="e" type="email" /></label>
+        <label>Contact Phone <input [(ngModel)]="profile.phone" name="p" /></label>
+        <div class="row">
+          <button class="btn-green" (click)="saveProfile()">Save Changes</button>
+          <button class="btn-line" (click)="go('profile')">Cancel</button>
+        </div>
+      </section>
+    }
+
+    <!-- ADDRESSES -->
+    @case ('addresses') {
+      <section class="view panel">
+        <h2 class="sec-title">Saved Delivery Addresses</h2>
+        @for (a of addresses; track a.label) {
+          <div class="addr">
+            <b>{{ a.label }}</b>
+            <span>{{ a.text }}</span>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- NOTIFICATIONS -->
+    @case ('notifications') {
+      <section class="view panel">
+        <h2 class="sec-title">Notifications <button class="link-btn" (click)="markRead()">Mark All Read</button></h2>
+        @for (n of notifications(); track n.text) {
+          <div class="note" [class.unread]="!n.read">
+            <span>{{ n.text }}</span>
+            <small>{{ n.time }}</small>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- PASSWORD -->
     @case ('password') {
       <section class="view panel">
-        <h2 class="sec">Change password</h2>
-        <label>Current password <input type="password" name="c" /></label>
-        <label>New password <input type="password" name="n" /></label>
-        <label>Confirm new password <input type="password" name="f" /></label>
-        <div class="row"><button class="btn-green" (click)="changePassword()">Update password</button></div>
+        <h2 class="sec-title">Change Password</h2>
+        <label>Current Password <input type="password" name="c" /></label>
+        <label>New Password <input type="password" name="n" /></label>
+        <label>Confirm Password <input type="password" name="f" /></label>
+        <div class="row">
+          <button class="btn-green" (click)="changePassword()">Update Password</button>
+        </div>
       </section>
     }
   }
 </main>
 
-
+<!-- ============================================== -->
+<!-- REUSABLE PRODUCT CARD TEMPLATE                 -->
+<!-- ============================================== -->
 <ng-template #card let-p>
   <article class="card">
-    <button class="heart" [class.on]="isWished(p.id)" (click)="toggleWish(p)" aria-label="Wishlist">{{ isWished(p.id) ? '♥' : '♡' }}</button>
-    <div class="thumb" [style.background]="p.tint">
-      @if (p.imageUrl) {
-        <img [src]="p.imageUrl" [alt]="p.name" style="width: 100%; height: 100%; object-fit: contain;" />
-      } @else {
-        <span>{{ p.icon }}</span>
+    <!-- Badges Row -->
+    <div class="card-badges">
+      @if (p.discountPercent > 0) {
+        <span class="badge-discount">-{{ p.discountPercent }}% OFF</span>
+      }
+      @if (p.stock != null && p.stock <= 5 && p.stock > 0) {
+        <span class="badge-stock-low">Only {{ p.stock }} left!</span>
+      } @else if (p.stock != null && p.stock <= 0) {
+        <span class="badge-stock-out">Out of Stock</span>
       }
     </div>
-    <h4>{{ p.name }}</h4>
 
+    <!-- Wishlist Heart Button -->
+    <button class="heart" [class.on]="isWished(p.id)" (click)="toggleWish(p)" aria-label="Save to Wishlist">
+      {{ isWished(p.id) ? '♥' : '♡' }}
+    </button>
 
+    <!-- Thumbnail with Unsplash fallback -->
+    <div class="thumb" [style.background]="p.tint" (click)="viewDetails(p)">
+      <img [src]="p.imageUrl" [alt]="p.name" (error)="onImgError($event, p.category, p.name)" loading="lazy" />
+    </div>
+
+    <!-- Vendor Shop Tag -->
     @if (p.vendorShop) {
-      <div class="vendor-shop-tag" style="font-size: 12px; color: #1e6333; margin: 2px 0 6px; display: flex; align-items: center; gap: 4px;">
+      <div class="vendor-shop-tag" (click)="filterByShop(p.vendorShop.shopName)" title="View all products from this seller">
         <span>{{ p.vendorShop.logo || '🏪' }}</span>
-        <b>{{ p.vendorShop.shopName }}</b>
+        <span class="shop-name-txt">{{ p.vendorShop.shopName }}</span>
+        <span class="verified-dot">✓</span>
       </div>
     }
 
-    <div class="stars">{{ stars(p.rating) }} <small>{{ p.rating }}</small></div>
-    <div class="price">{{ money(p.price) }} <s>{{ money(p.old) }}</s></div>
+    <!-- Product Title -->
+    <h4 (click)="viewDetails(p)">{{ p.name }}</h4>
+
+    <!-- Rating and Reviews -->
+    <div class="stars">
+      <span>{{ stars(p.rating) }}</span>
+      <small>{{ p.rating }} ({{ p.reviewsCount || 18 }})</small>
+    </div>
+
+    <!-- Price Section -->
+    <div class="price">
+      {{ money(p.price) }}
+      @if (p.old > p.price) {
+        <s>{{ money(p.old) }}</s>
+      }
+    </div>
+
+    <!-- Actions -->
     <div class="card-btns">
-      <button class="btn-line" (click)="viewDetails(p)">View details</button>
-      <button class="btn-green" (click)="addToCart(p)">Add to cart</button>
+      <button class="btn-line" (click)="viewDetails(p)">Quick View</button>
+      <button class="btn-green" [disabled]="p.stock != null && p.stock <= 0" (click)="addToCart(p)">
+        {{ p.stock != null && p.stock <= 0 ? 'Out of Stock' : '+ Add' }}
+      </button>
     </div>
   </article>
 </ng-template>
 
-
+<!-- ============================================== -->
+<!-- PRODUCT DETAILS MODAL                          -->
+<!-- ============================================== -->
 @if (detail(); as p) {
   <div class="overlay" (click)="closeDetail()"></div>
   <div class="modal" role="dialog" aria-modal="true">
     <button class="x" (click)="closeDetail()" aria-label="Close">✕</button>
-    <div class="m-thumb" [style.background]="p.tint">
-      @if (p.imageUrl) {
-        <img [src]="p.imageUrl" [alt]="p.name" style="max-height: 140px; object-fit: contain;" />
-      } @else {
-        <span>{{ p.icon }}</span>
-      }
-    </div>
-    <div class="m-body">
-      <h3>{{ p.name }}</h3>
-      <div class="stars">{{ stars(p.rating) }} <small>{{ p.rating }}</small></div>
-      <div class="price big">{{ money(p.price) }} <s>{{ money(p.old) }}</s></div>
-      <p class="desc">{{ p.description || 'Sold by verified vendors on Bazario with easy returns and secure payment.' }}</p>
 
-      <div class="row">
-        <button class="btn-green" (click)="addToCart(p)">Add to cart</button>
-        <button class="btn-yellow" (click)="buyNow(p)">Buy now</button>
-        <button class="btn-line" (click)="toggleWish(p)">{{ isWished(p.id) ? '♥ Wishlisted' : '♡ Wishlist' }}</button>
+    <div class="m-thumb" [style.background]="p.tint">
+      <img [src]="p.imageUrl" [alt]="p.name" (error)="onImgError($event, p.category, p.name)" />
+    </div>
+
+    <div class="m-body">
+      <span class="category-pill">{{ p.category }}</span>
+      <h3>{{ p.name }}</h3>
+
+      <div class="stars big">
+        <span>{{ stars(p.rating) }}</span>
+        <small>{{ p.rating }} / 5.0 ({{ p.reviewsCount || 24 }} verified customer ratings)</small>
       </div>
 
+      <div class="price big">
+        {{ money(p.price) }}
+        @if (p.old > p.price) {
+          <s>{{ money(p.old) }}</s>
+          <span class="save-tag">Save {{ money(p.old - p.price) }} ({{ p.discountPercent }}% off)</span>
+        }
+      </div>
 
+      <!-- Stock availability badge -->
+      <div class="stock-status-row">
+        @if (p.stock != null && p.stock > 5) {
+          <span class="stock-in">✓ In Stock ({{ p.stock }} units available)</span>
+        } @else if (p.stock != null && p.stock > 0) {
+          <span class="stock-low">⚠️ Low Stock: Only {{ p.stock }} left in store</span>
+        } @else {
+          <span class="stock-out">✕ Currently Out of Stock</span>
+        }
+      </div>
+
+      <p class="desc">{{ p.description || 'Authentic product sourced directly from verified regional sellers on Bazario Marketplace. Includes 7-day buyer protection.' }}</p>
+
+      <!-- Quantity Selector -->
+      <div class="modal-qty-selector">
+        <label>Select Quantity:</label>
+        <div class="qty-counter">
+          <button (click)="detailQty.set(detailQty() > 1 ? detailQty() - 1 : 1)">−</button>
+          <span>{{ detailQty() }}</span>
+          <button (click)="detailQty.set(detailQty() < (p.stock || 50) ? detailQty() + 1 : detailQty())">+</button>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="row">
+        <button class="btn-green" [disabled]="p.stock != null && p.stock <= 0" (click)="addToCart(p, detailQty()); closeDetail()">
+          🛒 Add to Cart
+        </button>
+        <button class="btn-yellow" [disabled]="p.stock != null && p.stock <= 0" (click)="buyNow(p)">
+          ⚡ Buy Now
+        </button>
+        <button class="btn-line" (click)="toggleWish(p)">
+          {{ isWished(p.id) ? '♥ In Wishlist' : '♡ Wishlist' }}
+        </button>
+      </div>
+
+      <!-- Vendor Info Toggle Button -->
       <button class="btn-line wide" (click)="seeVendors()">
-        {{ showVendors() ? 'Hide vendor details' : 'See vendor & store info' }}
+        {{ showVendors() ? '▲ Hide Vendor Store Info' : '🏪 View Verified Vendor Store Information ▼' }}
       </button>
 
       <div class="vendors" [class.open]="showVendors()">
         <div class="vendors-in">
           @if (p.vendorShop) {
-            <div class="vendor" style="flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px; border-radius: 8px; background: #f9fbf9; border: 1px solid #e1ede2;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 24px;">{{ p.vendorShop.logo || '🏪' }}</span>
+            <div class="vendor-info-card">
+              <div class="v-header">
+                <span class="v-avatar">{{ p.vendorShop.logo || '🏪' }}</span>
                 <div>
-                  <b style="font-size: 15px; color: #1f3620;">{{ p.vendorShop.shopName }}</b>
-                  <div style="font-size: 12px; color: #57624f;">Owner: {{ p.vendorShop.ownerName }}</div>
+                  <b class="v-name">{{ p.vendorShop.shopName }}</b>
+                  <div class="v-verified">✓ Verified Local Seller</div>
                 </div>
               </div>
-
-              <div style="font-size: 12px; color: #495444; margin-top: 4px; display: flex; flex-direction: column; gap: 3px;">
-                <span>📧 <strong>Email:</strong> {{ p.vendorShop.email }}</span>
+              <div class="v-meta">
+                @if (p.vendorShop.ownerName) { <span>👤 <strong>Owner:</strong> {{ p.vendorShop.ownerName }}</span> }
+                @if (p.vendorShop.email) { <span>📧 <strong>Email:</strong> {{ p.vendorShop.email }}</span> }
                 @if (p.vendorShop.phone) { <span>📞 <strong>Contact:</strong> {{ p.vendorShop.phone }}</span> }
                 @if (p.vendorShop.address) { <span>📍 <strong>Location:</strong> {{ p.vendorShop.address }}</span> }
               </div>
             </div>
           } @else {
-            <div style="padding: 10px; font-size: 13px; color: #666;">No vendor information mapped for this product.</div>
+            <div class="empty-vendor">This product is fulfilled by Bazario Direct Marketplace.</div>
           }
         </div>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- ============================================== -->
+<!-- CART & CHECKOUT DRAWER                         -->
+<!-- ============================================== -->
+<div class="overlay cart" [class.show]="cartOpen()" (click)="closeCart()"></div>
+<aside class="drawer" [class.open]="cartOpen()">
+  <header>
+    <h3>Shopping Cart ({{ cartCount() }})</h3>
+    <button class="x static" (click)="closeCart()">✕</button>
+  </header>
+
+  @if (checkedOut()) {
+    <div class="success">
+      <div class="check">✓</div>
+      <h3>Order Placed Successfully!</h3>
+      <p>Thank you for supporting verified local sellers on Bazario. You can track your package progress anytime from My Orders.</p>
+      <button class="btn-green" (click)="go('orders')">View in My Orders →</button>
+    </div>
+  } @else {
+    <div class="lines">
+      @for (i of cart(); track i.p.id) {
+        <div class="line">
+          <div class="l-thumb">
+            <img [src]="i.p.imageUrl" [alt]="i.p.name" (error)="onImgError($event, i.p.category, i.p.name)" />
+          </div>
+          <div class="l-info">
+            <b>{{ i.p.name }}</b>
+            <small class="l-price">{{ money(i.p.price) }}</small>
+            @if (i.p.vendorShop) {
+              <small class="l-shop">🏪 {{ i.p.vendorShop.shopName }}</small>
+            }
+          </div>
+          <div class="qty">
+            <button (click)="changeQty(i.p.id, -1)">−</button>
+            <span>{{ i.qty }}</span>
+            <button (click)="changeQty(i.p.id, 1)">+</button>
+          </div>
+        </div>
+      } @empty {
+        <div class="empty">
+          <span style="font-size: 36px; display: block; margin-bottom: 8px;">🛒</span>
+          <b>Your cart is empty.</b>
+          <p>Add some products to get started!</p>
+        </div>
+      }
+    </div>
+
+    <!-- Promo / Coupon Code Box -->
+    @if (cart().length > 0) {
+      <div class="cart-coupon-box">
+        @if (!appliedCouponCode()) {
+          <div class="coupon-input-group">
+            <input type="text" placeholder="Coupon Code (e.g. BAZARIO20)" [(ngModel)]="couponCodeInput" />
+            <button class="btn-apply-coupon" (click)="applyCoupon()">Apply</button>
+          </div>
+        } @else {
+          <div class="coupon-success-tag">
+            <span>🎟️ <strong>{{ appliedCouponCode() }}</strong> applied (-{{ money(couponDiscount()) }})</span>
+            <button type="button" (click)="removeCoupon()" title="Remove Coupon">✕</button>
+          </div>
+        }
+      </div>
+    }
+
+    <footer>
+      <div class="total-row">
+        <span>Subtotal</span>
+        <span>{{ money(cartTotal()) }}</span>
+      </div>
+      @if (appliedCouponCode()) {
+        <div class="total-row discount-row">
+          <span>Coupon Discount</span>
+          <span>-{{ money(couponDiscount()) }}</span>
+        </div>
+      }
+      <div class="total-row final-total">
+        <span>Order Total</span>
+        <b>{{ money(finalCartTotal()) }}</b>
+      </div>
+      <button class="btn-yellow wide" [disabled]="!cart().length" (click)="checkout()">
+        Place Order &amp; Proceed to Checkout →
+      </button>
+    </footer>
+  }
+</aside>
+
+<!-- ============================================== -->
+<!-- WRITE REVIEW MODAL                             -->
+<!-- ============================================== -->
+@if (showReviewModal()) {
+  <div class="overlay" (click)="closeReviewModal()"></div>
+  <div class="modal small" role="dialog" aria-modal="true">
+    <button class="x" (click)="closeReviewModal()" aria-label="Close">✕</button>
+    <div class="m-body">
+      <h3>⭐ Rate &amp; Review Product</h3>
+      <p class="desc" *ngIf="reviewProduct()">Share your verified feedback for <strong>{{ reviewProduct()?.name }}</strong></p>
+
+      <div class="review-star-selector">
+        <label>Your Rating:</label>
+        <div class="star-picker">
+          <span *ngFor="let s of [1,2,3,4,5]" (click)="reviewRating = s">
+            {{ s <= reviewRating ? '★' : '☆' }}
+          </span>
+        </div>
+      </div>
+
+      <label>Review Headline:
+        <input type="text" [(ngModel)]="reviewTitle" placeholder="e.g. Excellent build quality and fast delivery" />
+      </label>
+
+      <label>Detailed Feedback:
+        <textarea rows="4" [(ngModel)]="reviewComment" placeholder="Write about performance, durability, packaging..."></textarea>
+      </label>
+
+      <div class="row modal-actions">
+        <button class="btn-line" (click)="closeReviewModal()">Cancel</button>
+        <button class="btn-green" (click)="submitCustomerReview()">Submit Review</button>
       </div>
     </div>
   </div>
 }
 
-<!-- Cart + checkout drawer -->
-<div class="overlay cart" [class.show]="cartOpen()" (click)="closeCart()"></div>
-<aside class="drawer" [class.open]="cartOpen()">
-  <header><h3>Your cart ({{ cartCount() }})</h3><button class="x static" (click)="closeCart()">✕</button></header>
-  @if (checkedOut()) {
-    <div class="success"><div class="check">✓</div><h3>Order placed</h3><p>Track it any time from My Orders.</p>
-      <button class="btn-green" (click)="go('orders')">My orders</button></div>
-  } @else {
-    <div class="lines">
-      @for (i of cart(); track i.p.id) {
-        <div class="line"><span class="l-ico">{{ i.p.icon }}</span>
-          <div><b>{{ i.p.name }}</b><small>{{ money(i.p.price) }}</small></div>
-          <div class="qty"><button (click)="changeQty(i.p.id, -1)">−</button><span>{{ i.qty }}</span><button (click)="changeQty(i.p.id, 1)">+</button></div>
-        </div>
-      } @empty { <div class="empty">Your cart is empty. Add something you like.</div> }
-    </div>
-    <footer><div class="total"><span>Total</span><b>{{ money(cartTotal()) }}</b></div>
-      <button class="btn-yellow wide" [disabled]="!cart().length" (click)="checkout()">Checkout</button></footer>
-  }
-</aside>
-
-<!-- Track order -->
+<!-- ============================================== -->
+<!-- TRACK ORDER MODAL                              -->
+<!-- ============================================== -->
 @if (tracking(); as o) {
   <div class="overlay" (click)="closeTrack()"></div>
   <div class="modal small" role="dialog" aria-modal="true">
     <button class="x" (click)="closeTrack()" aria-label="Close">✕</button>
-    <div class="m-body"><h3>Track {{ o.id }}</h3><p class="desc">{{ o.item }}</p>
+    <div class="m-body">
+      <h3>Track Order #{{ o.orderNumber || o.id }}</h3>
+      <p class="desc">Destination: <strong>{{ o.shippingAddress }}</strong></p>
+
       <ol class="track">
         @for (s of steps; track s; let idx = $index) {
-          <li [class.done]="idx <= stepIndex(o)" [style.transition-delay]="idx * 120 + 'ms'"><i></i>{{ s }}</li>
+          <li [class.done]="idx <= stepIndex(o)">
+            <i></i>
+            <div class="track-step-text">
+              <b>{{ s }}</b>
+              <small>{{ idx <= stepIndex(o) ? 'Completed' : 'Upcoming' }}</small>
+            </div>
+          </li>
         }
       </ol>
-      <button class="btn-line wide" (click)="closeTrack()">Close</button>
+      <button class="btn-line wide" (click)="closeTrack()">Close Tracker</button>
     </div>
   </div>
 }
 
+<!-- Toast Notification -->
 <div class="toast" [class.show]="toast()">{{ toast() }}</div>
-<footer class="foot">© 2026 Bazario · Multi-vendor marketplace</footer>
+
+<!-- Professional Footer -->
+<footer class="foot">
+  <div class="foot-inner">
+    <div class="foot-col brand-col">
+      <div class="foot-logo">
+        <span class="logo-mark sm">b</span>
+        <b>bazario</b>
+      </div>
+      <p>Bazario connects conscious shoppers with authentic verified vendors, local artisans, and premium regional retailers across India.</p>
+    </div>
+
+    <div class="foot-col">
+      <h4>Shop Categories</h4>
+      <ul>
+        <li><a (click)="pickCategory('Electronics')">Electronics &amp; Smart Tech</a></li>
+        <li><a (click)="pickCategory('Furniture')">Handcrafted Furniture</a></li>
+        <li><a (click)="pickCategory('Home & Garden')">Gardening &amp; Indoor Plants</a></li>
+        <li><a (click)="pickCategory('Grocery & Organic')">Fresh Farm Organic Produce</a></li>
+      </ul>
+    </div>
+
+    <div class="foot-col">
+      <h4>Customer Support</h4>
+      <ul>
+        <li><a (click)="go('orders')">Track Your Orders</a></li>
+        <li><a (click)="go('addresses')">Shipping &amp; Delivery Policies</a></li>
+        <li><a (click)="go('profile')">Account Profile &amp; Privacy</a></li>
+        <li><a (click)="notify('For instant help, call customer care at +91 98765 43210')">24/7 Help Desk</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="foot-bottom">
+    <span>© 2026 Bazario Marketplace · All rights reserved. Every Vendor, One Place.</span>
+  </div>
+</footer>
