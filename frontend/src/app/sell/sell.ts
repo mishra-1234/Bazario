@@ -93,7 +93,7 @@ export class Sell {
       password: this.seller.password
     };
 
-    this.http.post<any>('http://localhost:8080/api/sellers/register', payload).subscribe({
+    this.http.post<any>('https://bazario-io58.onrender.com/api/sellers/register', payload).subscribe({
       next: (res) => {
         this.isSubmitting = false;
         this.successMessage = res.message || 'Registration successful! Your seller account has been registered.';

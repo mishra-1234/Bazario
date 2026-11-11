@@ -78,11 +78,11 @@ export class Help {
   ticketMessage: string = '';
 
   issueTypes: string[] = [
-    'Order Related', 
-    'Refund or Return', 
-    'Payment Issue', 
-    'Account Issue', 
-    'Selling on Bazario', 
+    'Order Related',
+    'Refund or Return',
+    'Payment Issue',
+    'Account Issue',
+    'Selling on Bazario',
     'Other'
   ];
 
@@ -99,14 +99,14 @@ export class Help {
   filteredFaqs() {
     const query = this.searchQuery.toLowerCase().trim();
     if (!query) return [];
-    
+
     const allFaqs = [
       ...this.buyerFaqs.map(f => ({ ...f, type: 'Buyer' })),
       ...this.sellerFaqs.map(f => ({ ...f, type: 'Seller' }))
     ];
 
-    return allFaqs.filter(faq => 
-      faq.question.toLowerCase().includes(query) || 
+    return allFaqs.filter(faq =>
+      faq.question.toLowerCase().includes(query) ||
       faq.answer.toLowerCase().includes(query)
     );
   }
@@ -150,7 +150,7 @@ export class Help {
       message: this.ticketMessage
     };
 
-    this.http.post<any>('http://localhost:8080/api/tickets', payload).subscribe({
+    this.http.post<any>('https://bazario-io58.onrender.com/api/tickets', payload).subscribe({
       next: (res) => {
         this.isSubmitting = false;
         this.ticketSuccess = `Ticket submitted successfully! Your Ticket ID is: ${res.id || res.ticketId || 'generated successfully'}`;
@@ -172,7 +172,7 @@ export class Help {
     this.lookupResult = null;
     this.lookupError = '';
 
-    this.http.get<any>(`http://localhost:8080/api/tickets/${this.lookupTicketId.trim()}`).subscribe({
+    this.http.get<any>(`https://bazario-io58.onrender.com/api/tickets/${this.lookupTicketId.trim()}`).subscribe({
       next: (res) => {
         this.lookupResult = res;
       },

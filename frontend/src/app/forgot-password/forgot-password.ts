@@ -28,7 +28,7 @@ export class ForgotPassword {
 
   currentYear = new Date().getFullYear();
 
-  private readonly baseUrl = 'http://localhost:8080/users';
+  private readonly baseUrl = 'https://bazario-io58.onrender.com/users';
   private readonly emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   constructor(

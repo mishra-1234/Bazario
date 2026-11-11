@@ -46,8 +46,8 @@ export class Login {
 
   currentYear = new Date().getFullYear();
 
-  private readonly customerLoginUrl = 'http://localhost:8080/users/login';
-  private readonly vendorLoginUrl = 'http://localhost:8080/vendors/login';
+  private readonly customerLoginUrl = 'https://bazario-io58.onrender.com/users/login';
+  private readonly vendorLoginUrl = 'https://bazario-io58.onrender.com/vendors/login';
   private readonly emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   constructor(

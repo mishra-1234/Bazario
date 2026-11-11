@@ -89,11 +89,11 @@ export class CustomerDashboard implements OnInit {
   private router = inject(Router);
   private platformId = inject(PLATFORM_ID);
 
-  private apiUrl = 'http://localhost:8080/api/products';
-  private ordersUrl = 'http://localhost:8080/api/orders';
-  private couponsUrl = 'http://localhost:8080/api/coupons';
-  private reviewsUrl = 'http://localhost:8080/api/reviews';
-  private shopsUrl = 'http://localhost:8080/api/shops';
+  private apiUrl = 'https://bazario-io58.onrender.com/api/products';
+  private ordersUrl = 'https://bazario-io58.onrender.com/api/orders';
+  private couponsUrl = 'https://bazario-io58.onrender.com/api/coupons';
+  private reviewsUrl = 'https://bazario-io58.onrender.com/api/reviews';
+  private shopsUrl = 'https://bazario-io58.onrender.com/api/shops';
 
   // Navigation & View State
   view = signal<View>('home');

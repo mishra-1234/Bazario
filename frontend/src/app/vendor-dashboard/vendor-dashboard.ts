@@ -216,14 +216,14 @@ export class VendorDashboard implements OnInit {
   private platformId = inject(PLATFORM_ID);
   private cdr = inject(ChangeDetectorRef);
 
-  private shopsApiUrl = 'http://localhost:8080/api/shops';
-  private productsApiUrl = 'http://localhost:8080/api/products';
-  private vendorsApiUrl = 'http://localhost:8080/vendors';
-  private ordersApiUrl = 'http://localhost:8080/api/orders';
-  private analyticsApiUrl = 'http://localhost:8080/api/analytics';
-  private customersApiUrl = 'http://localhost:8080/api/customers';
-  private reviewsApiUrl = 'http://localhost:8080/api/reviews';
-  private couponsApiUrl = 'http://localhost:8080/api/coupons';
+  private shopsApiUrl = 'https://bazario-io58.onrender.com/api/shops';
+  private productsApiUrl = 'https://bazario-io58.onrender.com/api/products';
+  private vendorsApiUrl = 'https://bazario-io58.onrender.com/vendors';
+  private ordersApiUrl = 'https://bazario-io58.onrender.com/api/orders';
+  private analyticsApiUrl = 'https://bazario-io58.onrender.com/api/analytics';
+  private customersApiUrl = 'https://bazario-io58.onrender.com/api/customers';
+  private reviewsApiUrl = 'https://bazario-io58.onrender.com/api/reviews';
+  private couponsApiUrl = 'https://bazario-io58.onrender.com/api/coupons';
 
   // Vendor Information
   vendorName: string = 'Vendor';

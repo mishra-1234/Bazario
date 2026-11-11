@@ -166,7 +166,7 @@ export class Signup {
         phone: '9999999999', // temporary default value taaki validation pass ho jaye
       };
 
-      this.http.post('http://localhost:8080/vendors/signup', vendorData).subscribe({
+      this.http.post('https://bazario-io58.onrender.com/vendors/signup', vendorData).subscribe({
         next: (res) => {
           alert('Vendor registered successfully!');
           this.router.navigate(['/login']);
@@ -185,7 +185,7 @@ export class Signup {
         role: 'CUSTOMER',
       };
 
-      this.http.post('http://localhost:8080/users', customerData).subscribe({
+      this.http.post('https://bazario-io58.onrender.com/users', customerData).subscribe({
         next: (res) => {
           alert('Customer registered successfully!');
           this.router.navigate(['/login']);
